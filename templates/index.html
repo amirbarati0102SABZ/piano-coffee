@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
-
 <head>
 
     <meta charset="UTF-8">
@@ -9,9 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Piano Coffee</title>
-    <link rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- فونت -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,11 +18,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap"
-        rel="stylesheet">
+          rel="stylesheet">
 
     <!-- CSS -->
     <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}">
+          href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
 
@@ -31,54 +30,54 @@
 
     <header class="header">
 
-    <!-- لوگو -->
-    <div class="logo">
+        <!-- لوگو -->
+        <div class="logo">
 
-        <img src="{{ url_for('static', filename='images/logo.png') }}">
-
-    </div>
-
-    <!-- سمت راست -->
-    <div class="header-right">
-
-        <!-- عنوان -->
-        <div class="title">
-
-            منوی کافه پیانو
+            <img src="{{ url_for('static', filename='images/logo.png') }}">
 
         </div>
 
-        <!-- آیکون ها -->
-        <div class="header-icons">
+        <!-- سمت راست -->
+        <div class="header-right">
 
-            <!-- تماس -->
-            <a href="tel:09358853137">
+            <!-- عنوان -->
+            <div class="title">
 
-                <i class="fa-solid fa-phone"></i>
+                منوی کافه پیانو
 
-            </a>
+            </div>
 
-            <!-- اینستاگرام -->
-            <a href="https://instagram.com/piano__coffee_"
-               target="_blank">
+            <!-- آیکون ها -->
+            <div class="header-icons">
 
-                <i class="fa-brands fa-instagram"></i>
+                <!-- تماس -->
+                <a href="tel:09358853137">
 
-            </a>
+                    <i class="fa-solid fa-phone"></i>
 
-            <!-- مپ -->
-            <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
-               target="_blank">
+                </a>
 
-                <i class="fa-solid fa-location-dot"></i>
+                <!-- اینستاگرام -->
+                <a href="https://instagram.com/piano__coffee_"
+                   target="_blank">
 
-            </a>
+                    <i class="fa-brands fa-instagram"></i>
+
+                </a>
+
+                <!-- مپ -->
+                <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
+                   target="_blank">
+
+                    <i class="fa-solid fa-location-dot"></i>
+
+                </a>
+
+            </div>
 
         </div>
 
-    </div>
-
-</header>
+    </header>
 
     <!-- سرچ -->
     <div class="search-box">
@@ -119,23 +118,23 @@
 
                     {% for drink in drinks %}
 
-                        {% if drink[4] == 'گرم' %}
+                        {% if drink.category == 'گرم' %}
 
-                        <div class="card">
+                            <div class="card">
 
-                            <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
 
-                            <h2>
-                                {{ drink[1] }}
-                            </h2>
+                                <h2>
+                                    {{ drink.name }}
+                                </h2>
 
-                            <p class="price">
+                                <p class="price">
 
-                                {{ "{:,}".format(drink[2]) }} تومان
+                                    {{ "{:,}".format(drink.price) }} تومان
 
-                            </p>
+                                </p>
 
-                        </div>
+                            </div>
 
                         {% endif %}
 
@@ -156,23 +155,23 @@
 
                     {% for drink in drinks %}
 
-                        {% if drink[4] == 'سرد' %}
+                        {% if drink.category == 'سرد' %}
 
-                        <div class="card">
+                            <div class="card">
 
-                            <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
 
-                            <h2>
-                                {{ drink[1] }}
-                            </h2>
+                                <h2>
+                                    {{ drink.name }}
+                                </h2>
 
-                            <p class="price">
+                                <p class="price">
 
-                                {{ "{:,}".format(drink[2]) }} تومان
+                                    {{ "{:,}".format(drink.price) }} تومان
 
-                            </p>
+                                </p>
 
-                        </div>
+                            </div>
 
                         {% endif %}
 
@@ -193,23 +192,23 @@
 
                     {% for drink in drinks %}
 
-                        {% if drink[4] == 'ماچا' %}
+                        {% if drink.category == 'ماچا' %}
 
-                        <div class="card">
+                            <div class="card">
 
-                            <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
 
-                            <h2>
-                                {{ drink[1] }}
-                            </h2>
+                                <h2>
+                                    {{ drink.name }}
+                                </h2>
 
-                            <p class="price">
+                                <p class="price">
 
-                                {{ "{:,}".format(drink[2]) }} تومان
+                                    {{ "{:,}".format(drink.price) }} تومان
 
-                            </p>
+                                </p>
 
-                        </div>
+                            </div>
 
                         {% endif %}
 
@@ -226,77 +225,77 @@
     <!-- سرچ زنده -->
     <script>
 
-    document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function () {
 
-        const searchInput = document.getElementById("searchInput");
+            const searchInput = document.getElementById("searchInput");
 
-        searchInput.addEventListener("keyup", function () {
+            searchInput.addEventListener("keyup", function () {
 
-            let filter = searchInput.value.toLowerCase();
+                let filter = searchInput.value.toLowerCase();
 
-            let cards = document.querySelectorAll(".card");
+                let cards = document.querySelectorAll(".card");
 
-            cards.forEach(card => {
+                cards.forEach(card => {
 
-                let title = card.querySelector("h2")
-                                .innerText
-                                .toLowerCase();
+                    let title = card.querySelector("h2")
+                                    .innerText
+                                    .toLowerCase();
 
-                if (title.includes(filter)) {
+                    if (title.includes(filter)) {
 
-                    card.style.display = "block";
+                        card.style.display = "block";
 
-                } else {
+                    } else {
 
-                    card.style.display = "none";
+                        card.style.display = "none";
 
-                }
+                    }
+
+                });
 
             });
 
         });
 
-     });
-
     </script>
-        <!-- فوتر -->
 
-        <footer class="footer">
+    <!-- فوتر -->
+    <footer class="footer">
 
-            <h2>
-                ارتباط با کافه پیانو
-            </h2>
+        <h2>
+            ارتباط با کافه پیانو
+        </h2>
 
-            <div class="footer-buttons">
+        <div class="footer-buttons">
 
-                <!-- تماس -->
-                <a href="tel:09358853137" class="footer-btn">
+            <!-- تماس -->
+            <a href="tel:09358853137" class="footer-btn">
 
-                    تماس با کافه
+                تماس با کافه
 
-                </a>
+            </a>
 
-                <!-- اینستاگرام -->
-                <a href="https://instagram.com/piano__coffee_"
-                target="_blank"
-                class="footer-btn">
+            <!-- اینستاگرام -->
+            <a href="https://instagram.com/piano__coffee_"
+               target="_blank"
+               class="footer-btn">
 
-                    اینستاگرام
+                اینستاگرام
 
-                </a>
+            </a>
 
-                <!-- مپ -->
-                <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
-                target="_blank"
-                class="footer-btn">
+            <!-- مپ -->
+            <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
+               target="_blank"
+               class="footer-btn">
 
-                    لوکیشن کافه
+                لوکیشن کافه
 
-                </a>
+            </a>
 
-            </div>
+        </div>
 
-        </footer>
+    </footer>
 
 </body>
 
