@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>پنل مدیریت</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <div class="admin-panel">
+
+        <h1>پنل مدیریت</h1>
+        <a href="/logout" class="logout-btn">
+
+            خروج از پنل
+
+        </a>        
+
+        <a class="add-btn" href="/add">
+            افزودن نوشیدنی
+        </a>
+
+        <div class="admin-drinks">
+
+            {% for drink in drinks %}
+
+            <div class="admin-card">
+
+                <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+
+                <h2>{{ drink[1] }}</h2>
+
+                <p>{{ drink[2] }} تومان</p>
+                <a class="edit-btn"
+                    href="/edit/{{ drink[0] }}">
+
+                     ویرایش
+
+                </a>
+
+                <a class="delete-btn"
+                   href="/delete/{{ drink[0] }}">
+
+                   حذف
+
+                </a>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

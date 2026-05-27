@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>افزودن نوشیدنی</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <div class="login-box">
+
+        <h1>افزودن نوشیدنی</h1>
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <input type="text" name="name" placeholder="اسم نوشیدنی">
+
+            <input type="number" name="price" placeholder="قیمت">
+
+            <input type="file" name="image">
+
+            <input type="text" name="category" placeholder="دسته بندی">
+
+            <button type="submit">ثبت نوشیدنی</button>
+
+        </form>
+
+    </div>
+
+</body>
+
+</html>

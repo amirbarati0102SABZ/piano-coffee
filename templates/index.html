@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Piano Coffee</title>
+    <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
+    <!-- فونت -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <header class="header">
+
+    <!-- لوگو -->
+    <div class="logo">
+
+        <img src="{{ url_for('static', filename='images/logo.png') }}">
+
+    </div>
+
+    <!-- سمت راست -->
+    <div class="header-right">
+
+        <!-- عنوان -->
+        <div class="title">
+
+            منوی کافه پیانو
+
+        </div>
+
+        <!-- آیکون ها -->
+        <div class="header-icons">
+
+            <!-- تماس -->
+            <a href="tel:09358853137">
+
+                <i class="fa-solid fa-phone"></i>
+
+            </a>
+
+            <!-- اینستاگرام -->
+            <a href="https://instagram.com/piano__coffee_"
+               target="_blank">
+
+                <i class="fa-brands fa-instagram"></i>
+
+            </a>
+
+            <!-- مپ -->
+            <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
+               target="_blank">
+
+                <i class="fa-solid fa-location-dot"></i>
+
+            </a>
+
+        </div>
+
+    </div>
+
+</header>
+
+    <!-- سرچ -->
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="جستجوی نوشیدنی..."
+        >
+
+    </div>
+
+    <!-- کل صفحه -->
+    <div class="container">
+
+        <!-- سایدبار -->
+        <aside class="sidebar">
+
+            <a href="#hot">گرم</a>
+
+            <a href="#cold">سرد</a>
+
+            <a href="#matcha">ماچا</a>
+
+        </aside>
+
+        <!-- محتوا -->
+        <main class="content">
+
+            <!-- نوشیدنی گرم -->
+            <section id="hot">
+
+                <h1 class="section-title">
+                    نوشیدنی گرم
+                </h1>
+
+                <div class="cards">
+
+                    {% for drink in drinks %}
+
+                        {% if drink[4] == 'گرم' %}
+
+                        <div class="card">
+
+                            <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+
+                            <h2>
+                                {{ drink[1] }}
+                            </h2>
+
+                            <p class="price">
+
+                                {{ "{:,}".format(drink[2]) }} تومان
+
+                            </p>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+            <!-- نوشیدنی سرد -->
+            <section id="cold">
+
+                <h1 class="section-title">
+                    نوشیدنی سرد
+                </h1>
+
+                <div class="cards">
+
+                    {% for drink in drinks %}
+
+                        {% if drink[4] == 'سرد' %}
+
+                        <div class="card">
+
+                            <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+
+                            <h2>
+                                {{ drink[1] }}
+                            </h2>
+
+                            <p class="price">
+
+                                {{ "{:,}".format(drink[2]) }} تومان
+
+                            </p>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+            <!-- ماچا -->
+            <section id="matcha">
+
+                <h1 class="section-title">
+                    ماچا
+                </h1>
+
+                <div class="cards">
+
+                    {% for drink in drinks %}
+
+                        {% if drink[4] == 'ماچا' %}
+
+                        <div class="card">
+
+                            <img src="{{ url_for('static', filename='uploads/' + drink[3]) }}">
+
+                            <h2>
+                                {{ drink[1] }}
+                            </h2>
+
+                            <p class="price">
+
+                                {{ "{:,}".format(drink[2]) }} تومان
+
+                            </p>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- سرچ زنده -->
+    <script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const searchInput = document.getElementById("searchInput");
+
+        searchInput.addEventListener("keyup", function () {
+
+            let filter = searchInput.value.toLowerCase();
+
+            let cards = document.querySelectorAll(".card");
+
+            cards.forEach(card => {
+
+                let title = card.querySelector("h2")
+                                .innerText
+                                .toLowerCase();
+
+                if (title.includes(filter)) {
+
+                    card.style.display = "block";
+
+                } else {
+
+                    card.style.display = "none";
+
+                }
+
+            });
+
+        });
+
+     });
+
+    </script>
+        <!-- فوتر -->
+
+        <footer class="footer">
+
+            <h2>
+                ارتباط با کافه پیانو
+            </h2>
+
+            <div class="footer-buttons">
+
+                <!-- تماس -->
+                <a href="tel:09358853137" class="footer-btn">
+
+                    تماس با کافه
+
+                </a>
+
+                <!-- اینستاگرام -->
+                <a href="https://instagram.com/piano__coffee_"
+                target="_blank"
+                class="footer-btn">
+
+                    اینستاگرام
+
+                </a>
+
+                <!-- مپ -->
+                <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
+                target="_blank"
+                class="footer-btn">
+
+                    لوکیشن کافه
+
+                </a>
+
+            </div>
+
+        </footer>
+
+</body>
+
+</html>
