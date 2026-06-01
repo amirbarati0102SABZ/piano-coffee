@@ -888,3 +888,316 @@ section{
     margin-bottom:25px;
 
 }
+.admin-card{
+
+background:white;
+border-radius:25px;
+padding:20px;
+box-shadow:0 10px 25px rgba(0,0,0,.08);
+transition:.3s;
+
+}
+
+.admin-card:hover{
+
+transform:translateY(-5px);
+
+}
+/* =========================
+   ADMIN DASHBOARD UPGRADE
+========================= */
+
+.admin-panel {
+    padding: 35px;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top right, rgba(139, 94, 60, 0.12), transparent 35%),
+        #ece8e1;
+}
+
+.admin-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.admin-topbar h1 {
+    color: #4b2e1e;
+    font-size: 34px;
+    margin-bottom: 8px;
+}
+
+.admin-subtitle {
+    color: #7a6254;
+    font-size: 16px;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.admin-action-btn {
+    display: inline-block;
+    padding: 13px 20px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.admin-action-btn:hover {
+    transform: translateY(-4px);
+}
+
+.view-btn {
+    background: white;
+    color: #4b2e1e;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.add-new-btn {
+    background: #4b2e1e;
+    color: white;
+}
+
+.logout-admin-btn {
+    background: #111;
+    color: white;
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.dashboard-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    border: 1px solid rgba(255,255,255,0.5);
+    transition: 0.3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-label {
+    display: block;
+    color: #7a6254;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
+
+.dashboard-card strong {
+    color: #4b2e1e;
+    font-size: 34px;
+}
+
+.latest-box {
+    background: #fff8ef;
+    color: #4b2e1e;
+    border: 1px solid #ead8c5;
+    padding: 18px 22px;
+    border-radius: 18px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+}
+
+.admin-section-title {
+    color: #4b2e1e;
+    margin-bottom: 20px;
+    font-size: 26px;
+}
+
+.admin-drinks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+}
+
+.admin-card {
+    background: white;
+    padding: 22px;
+    border-radius: 26px;
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-card::before {
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: rgba(75, 46, 30, 0.08);
+    border-radius: 50%;
+    top: -45px;
+    left: -45px;
+}
+
+.admin-card:hover {
+    transform: translateY(-6px);
+}
+
+.admin-card img {
+    width: 135px;
+    height: 135px;
+    object-fit: contain;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-card h2 {
+    color: #4b2e1e;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.admin-price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 8px;
+}
+
+.admin-category {
+    color: #7a6254;
+    margin-bottom: 18px;
+}
+
+.admin-card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.edit-btn,
+.delete-btn {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+}
+
+.edit-btn {
+    display: inline-block;
+    background: #4b2e1e;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+.delete-btn {
+    display: inline-block;
+    background: #d62828;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+.edit-btn:hover,
+.delete-btn:hover {
+    opacity: 0.88;
+}
+
+/* فرم‌ها */
+
+.login-box select {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: none;
+    background: #f3f3f3;
+    border-radius: 10px;
+    font-family: inherit;
+    outline: none;
+}
+
+.back-admin-link {
+    display: inline-block;
+    margin-top: 22px;
+    color: #4b2e1e;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-admin-link:hover {
+    text-decoration: underline;
+}
+
+.current-image-label {
+    margin-bottom: 10px;
+    color: #4b2e1e;
+    font-weight: bold;
+}
+
+.edit-preview-image {
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
+    margin-bottom: 18px;
+    border-radius: 18px;
+    background: #f7f3ee;
+    padding: 10px;
+}
+
+/* موبایل پنل مدیریت */
+
+@media(max-width: 768px) {
+
+    .admin-panel {
+        padding: 18px;
+    }
+
+    .admin-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-topbar h1 {
+        font-size: 26px;
+    }
+
+    .admin-actions {
+        width: 100%;
+    }
+
+    .admin-action-btn {
+        flex: 1;
+        text-align: center;
+        padding: 12px 10px;
+        font-size: 14px;
+    }
+
+    .dashboard-cards {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .dashboard-card {
+        padding: 18px;
+    }
+
+    .dashboard-card strong {
+        font-size: 28px;
+    }
+
+    .admin-drinks {
+        grid-template-columns: 1fr;
+    }
+}

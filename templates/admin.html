@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل مدیریت</title>
+    <title>پنل مدیریت | Piano Coffee</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css') }}">
@@ -14,15 +14,68 @@
 
     <div class="admin-panel">
 
-        <h1>پنل مدیریت</h1>
+        <div class="admin-topbar">
 
-        <a href="/logout" class="logout-btn">
-            خروج از پنل
-        </a>
+            <div>
+                <h1>پنل مدیریت کافه پیانو</h1>
+                <p class="admin-subtitle">
+                    مدیریت منو، نوشیدنی‌ها و قیمت‌ها
+                </p>
+            </div>
 
-        <a class="add-btn" href="/add">
-            افزودن نوشیدنی
-        </a>
+            <div class="admin-actions">
+                <a href="/" class="admin-action-btn view-btn">
+                    مشاهده سایت
+                </a>
+
+                <a href="/add" class="admin-action-btn add-new-btn">
+                    افزودن نوشیدنی
+                </a>
+
+                <a href="/logout" class="admin-action-btn logout-admin-btn">
+                    خروج
+                </a>
+            </div>
+
+        </div>
+
+        <!-- داشبورد آماری -->
+        <div class="dashboard-cards">
+
+            <div class="dashboard-card">
+                <span class="dashboard-label">کل نوشیدنی‌ها</span>
+                <strong>{{ total_count }}</strong>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-label">نوشیدنی گرم</span>
+                <strong>{{ hot_count }}</strong>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-label">نوشیدنی سرد</span>
+                <strong>{{ cold_count }}</strong>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-label">ماچا</span>
+                <strong>{{ matcha_count }}</strong>
+            </div>
+
+        </div>
+
+        {% if latest_drink %}
+        <div class="latest-box">
+            آخرین آیتم اضافه‌شده:
+            <strong>{{ latest_drink.name }}</strong>
+            از دسته
+            <strong>{{ latest_drink.category }}</strong>
+        </div>
+        {% endif %}
+
+        <h2 class="admin-section-title">
+            لیست نوشیدنی‌ها
+        </h2>
 
         <div class="admin-drinks">
 
@@ -30,23 +83,36 @@
 
             <div class="admin-card">
 
-                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
+                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                     alt="{{ drink.name }}">
 
                 <h2>{{ drink.name }}</h2>
 
-                <p>{{ "{:,}".format(drink.price) }} تومان</p>
+                <p class="admin-price">
+                    {{ "{:,}".format(drink.price) }} تومان
+                </p>
 
-                <p>دسته‌بندی: {{ drink.category }}</p>
+                <p class="admin-category">
+                    دسته‌بندی: {{ drink.category }}
+                </p>
 
-                <a class="edit-btn" href="/edit/{{ drink.id }}">
-                    ویرایش
-                </a>
+                <div class="admin-card-actions">
 
-                <a class="delete-btn"
-                   href="/delete/{{ drink.id }}"
-                   onclick="return confirm('آیا از حذف این آیتم مطمئن هستید؟')">
-                   حذف
-                </a>
+                    <a class="edit-btn" href="/edit/{{ drink.id }}">
+                        ویرایش
+                    </a>
+
+                    <form method="POST"
+                          action="/delete/{{ drink.id }}"
+                          onsubmit="return confirm('آیا از حذف این آیتم مطمئن هستید؟')">
+
+                        <button type="submit" class="delete-btn">
+                            حذف
+                        </button>
+
+                    </form>
+
+                </div>
 
             </div>
 

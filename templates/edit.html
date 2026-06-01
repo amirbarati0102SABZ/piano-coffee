@@ -25,31 +25,47 @@
             <input type="text"
                    name="name"
                    value="{{ drink.name }}"
-                   placeholder="اسم نوشیدنی">
+                   placeholder="اسم نوشیدنی"
+                   required>
 
             <input type="number"
                    name="price"
+                   min="0"
+                   step="1000"
                    value="{{ drink.price }}"
-                   placeholder="قیمت">
+                   placeholder="قیمت"
+                   required>
 
-            <p>عکس فعلی:</p>
+            <select name="category" required>
+                {% for category in categories %}
+                    <option value="{{ category }}"
+                            {% if drink.category == category %}selected{% endif %}>
+                        {{ category }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <p class="current-image-label">
+                عکس فعلی:
+            </p>
 
             <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
-                 style="width:120px;height:120px;object-fit:contain;margin-bottom:15px;">
+                 class="edit-preview-image"
+                 alt="{{ drink.name }}">
 
             <input type="file"
-                   name="image">
-
-            <input type="text"
-                   name="category"
-                   value="{{ drink.category }}"
-                   placeholder="دسته بندی">
+                   name="image"
+                   accept="image/png,image/jpeg,image/jpg,image/webp">
 
             <button type="submit">
                 ذخیره تغییرات
             </button>
 
         </form>
+
+        <a href="/admin" class="back-admin-link">
+            بازگشت به پنل مدیریت
+        </a>
 
     </div>
 

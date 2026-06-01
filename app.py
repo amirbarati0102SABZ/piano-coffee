@@ -2,15 +2,25 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 import os
+import uuid
 
 app = Flask(__name__)
 
 # Secret Key برای Session
-app.secret_key = os.environ.get("SECRET_KEY", "piano-secret-key")
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
 
 # مسیر آپلود عکس‌ها
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# حداکثر حجم آپلود: 5MB
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+# فرمت‌های مجاز عکس
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+# دسته‌بندی‌های مجاز
+ALLOWED_CATEGORIES = ["گرم", "سرد", "ماچا"]
 
 # اگر پوشه uploads نبود بساز
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -42,6 +52,40 @@ with app.app_context():
     db.create_all()
 
 
+def is_admin_logged_in():
+    return session.get("admin") is True
+
+
+def allowed_file(filename):
+    if "." not in filename:
+        return False
+
+    ext = filename.rsplit(".", 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
+
+
+def save_uploaded_image(image_file):
+    """
+    ذخیره عکس با اسم امن و یکتا
+    خروجی: نام فایل ذخیره‌شده
+    """
+    original_filename = secure_filename(image_file.filename)
+
+    if original_filename == "":
+        return None
+
+    if not allowed_file(original_filename):
+        return None
+
+    ext = original_filename.rsplit(".", 1)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex}.{ext}"
+
+    image_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
+    image_file.save(image_path)
+
+    return unique_filename
+
+
 # صفحه اصلی مشتری
 @app.route("/")
 def home():
@@ -56,8 +100,12 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        admin_username = os.environ.get("ADMIN_USERNAME", "admin")
-        admin_password = os.environ.get("ADMIN_PASSWORD", "1234")
+        admin_username = os.environ.get("ADMIN_USERNAME")
+        admin_password = os.environ.get("ADMIN_PASSWORD")
+
+        # اگر روی سرور متغیرها تنظیم نشده باشند، ورود انجام نشود
+        if not admin_username or not admin_password:
+            return "متغیرهای ADMIN_USERNAME و ADMIN_PASSWORD روی سرور تنظیم نشده‌اند."
 
         if username == admin_username and password == admin_password:
             session["admin"] = True
@@ -75,42 +123,65 @@ def logout():
     return redirect(url_for("home"))
 
 
-# پنل مدیریت
+# پنل مدیریت + داشبورد
 @app.route("/admin")
 def admin():
-    if not session.get("admin"):
+    if not is_admin_logged_in():
         return redirect(url_for("login"))
 
     drinks = Drink.query.order_by(Drink.id.desc()).all()
-    return render_template("admin.html", drinks=drinks)
+
+    total_count = Drink.query.count()
+    hot_count = Drink.query.filter_by(category="گرم").count()
+    cold_count = Drink.query.filter_by(category="سرد").count()
+    matcha_count = Drink.query.filter_by(category="ماچا").count()
+    latest_drink = Drink.query.order_by(Drink.id.desc()).first()
+
+    return render_template(
+        "admin.html",
+        drinks=drinks,
+        total_count=total_count,
+        hot_count=hot_count,
+        cold_count=cold_count,
+        matcha_count=matcha_count,
+        latest_drink=latest_drink
+    )
 
 
 # افزودن نوشیدنی
 @app.route("/add", methods=["GET", "POST"])
 def add():
-    if not session.get("admin"):
+    if not is_admin_logged_in():
         return redirect(url_for("login"))
 
     if request.method == "POST":
-        name = request.form.get("name")
-        price = request.form.get("price")
-        category = request.form.get("category")
+        name = request.form.get("name", "").strip()
+        price = request.form.get("price", "").strip()
+        category = request.form.get("category", "").strip()
         image_file = request.files.get("image")
 
         if not name or not price or not category or not image_file:
             return "لطفاً همه فیلدها را کامل وارد کنید"
 
-        filename = secure_filename(image_file.filename)
+        if category not in ALLOWED_CATEGORIES:
+            return "دسته‌بندی نامعتبر است"
 
-        if filename == "":
-            return "لطفاً عکس انتخاب کنید"
+        try:
+            price = int(price)
+        except ValueError:
+            return "قیمت باید عدد باشد"
 
-        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        image_file.save(image_path)
+        if price < 0:
+            return "قیمت نمی‌تواند منفی باشد"
+
+        filename = save_uploaded_image(image_file)
+
+        if not filename:
+            return "فرمت عکس مجاز نیست. فقط png، jpg، jpeg و webp مجاز هستند."
 
         new_drink = Drink(
             name=name,
-            price=int(price),
+            price=price,
             image=filename,
             category=category
         )
@@ -120,45 +191,81 @@ def add():
 
         return redirect(url_for("admin"))
 
-    return render_template("add.html")
+    return render_template("add.html", categories=ALLOWED_CATEGORIES)
 
 
 # ویرایش نوشیدنی
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
-    if not session.get("admin"):
+    if not is_admin_logged_in():
         return redirect(url_for("login"))
 
     drink = Drink.query.get_or_404(id)
 
     if request.method == "POST":
-        drink.name = request.form.get("name")
-        drink.price = int(request.form.get("price"))
-        drink.category = request.form.get("category")
+        name = request.form.get("name", "").strip()
+        price = request.form.get("price", "").strip()
+        category = request.form.get("category", "").strip()
+
+        if not name or not price or not category:
+            return "لطفاً همه فیلدها را کامل وارد کنید"
+
+        if category not in ALLOWED_CATEGORIES:
+            return "دسته‌بندی نامعتبر است"
+
+        try:
+            price = int(price)
+        except ValueError:
+            return "قیمت باید عدد باشد"
+
+        if price < 0:
+            return "قیمت نمی‌تواند منفی باشد"
+
+        drink.name = name
+        drink.price = price
+        drink.category = category
 
         image_file = request.files.get("image")
 
-        # اگر عکس جدید انتخاب شد، جایگزین کن
+        # اگر عکس جدید انتخاب شد
         if image_file and image_file.filename != "":
-            filename = secure_filename(image_file.filename)
-            image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            image_file.save(image_path)
+            filename = save_uploaded_image(image_file)
+
+            if not filename:
+                return "فرمت عکس مجاز نیست. فقط png، jpg، jpeg و webp مجاز هستند."
+
+            # حذف عکس قبلی از uploads
+            old_image_path = os.path.join(app.config["UPLOAD_FOLDER"], drink.image)
+            if os.path.exists(old_image_path):
+                try:
+                    os.remove(old_image_path)
+                except Exception:
+                    pass
+
             drink.image = filename
 
         db.session.commit()
 
         return redirect(url_for("admin"))
 
-    return render_template("edit.html", drink=drink)
+    return render_template("edit.html", drink=drink, categories=ALLOWED_CATEGORIES)
 
 
-# حذف نوشیدنی
-@app.route("/delete/<int:id>")
+# حذف نوشیدنی - با POST
+@app.route("/delete/<int:id>", methods=["POST"])
 def delete(id):
-    if not session.get("admin"):
+    if not is_admin_logged_in():
         return redirect(url_for("login"))
 
     drink = Drink.query.get_or_404(id)
+
+    # حذف عکس از پوشه uploads
+    image_path = os.path.join(app.config["UPLOAD_FOLDER"], drink.image)
+    if os.path.exists(image_path):
+        try:
+            os.remove(image_path)
+        except Exception:
+            pass
 
     db.session.delete(drink)
     db.session.commit()
@@ -167,4 +274,4 @@ def delete(id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=False)

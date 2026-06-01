@@ -22,17 +22,42 @@
 
         <form method="POST" enctype="multipart/form-data">
 
-            <input type="text" name="name" placeholder="اسم نوشیدنی" required>
+            <input type="text"
+                   name="name"
+                   placeholder="اسم نوشیدنی"
+                   required>
 
-            <input type="number" name="price" placeholder="قیمت" required>
+            <input type="number"
+                   name="price"
+                   min="0"
+                   step="1000"
+                   placeholder="قیمت"
+                   required>
 
-            <input type="file" name="image" required>
+            <select name="category" required>
+                <option value="">انتخاب دسته‌بندی</option>
 
-            <input type="text" name="category" placeholder="دسته بندی مثل گرم، سرد، ماچا" required>
+                {% for category in categories %}
+                    <option value="{{ category }}">
+                        {{ category }}
+                    </option>
+                {% endfor %}
+            </select>
 
-            <button type="submit">ثبت نوشیدنی</button>
+            <input type="file"
+                   name="image"
+                   accept="image/png,image/jpeg,image/jpg,image/webp"
+                   required>
+
+            <button type="submit">
+                ثبت نوشیدنی
+            </button>
 
         </form>
+
+        <a href="/admin" class="back-admin-link">
+            بازگشت به پنل مدیریت
+        </a>
 
     </div>
 
