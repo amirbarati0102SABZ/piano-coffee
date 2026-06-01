@@ -7,20 +7,18 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Piano Coffee</title>
+    <title>Piano Coffee | منوی آنلاین</title>
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- فونت -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap"
           rel="stylesheet">
 
-    <!-- CSS -->
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css') }}">
 
@@ -28,49 +26,37 @@
 
 <body>
 
-    <header class="header">
+    <header class="header main-header">
 
-        <!-- لوگو -->
         <div class="logo">
 
-            <img src="{{ url_for('static', filename='images/logo.png') }}">
+            <img src="{{ url_for('static', filename='images/logo.png') }}"
+                 alt="Piano Coffee Logo">
 
         </div>
 
-        <!-- سمت راست -->
         <div class="header-right">
 
-            <!-- عنوان -->
             <div class="title">
-
                 منوی کافه پیانو
-
             </div>
 
-            <!-- آیکون ها -->
             <div class="header-icons">
 
-                <!-- تماس -->
-                <a href="tel:09358853137">
-
+                <a href="tel:09358853137" aria-label="تماس با کافه">
                     <i class="fa-solid fa-phone"></i>
-
                 </a>
 
-                <!-- اینستاگرام -->
                 <a href="https://instagram.com/piano__coffee_"
-                   target="_blank">
-
+                   target="_blank"
+                   aria-label="اینستاگرام کافه">
                     <i class="fa-brands fa-instagram"></i>
-
                 </a>
 
-                <!-- مپ -->
                 <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
-                   target="_blank">
-
+                   target="_blank"
+                   aria-label="لوکیشن کافه">
                     <i class="fa-solid fa-location-dot"></i>
-
                 </a>
 
             </div>
@@ -79,223 +65,346 @@
 
     </header>
 
-    <!-- سرچ -->
-    <div class="search-box">
+    <!-- Hero -->
+    <section class="hero-section">
 
-        <input
-            type="text"
-            id="searchInput"
-            placeholder="جستجوی نوشیدنی..."
-        >
+        <div class="hero-overlay"></div>
 
-    </div>
+        <div class="hero-content">
 
-    <!-- کل صفحه -->
-    <div class="container">
+            <span class="hero-badge">
+                Piano Coffee
+            </span>
 
-        <!-- سایدبار -->
-        <aside class="sidebar">
+            <h1>
+                قهوه، آرامش، پیانو
+            </h1>
 
-            <a href="#hot">گرم</a>
+            <p>
+                منوی آنلاین کافه پیانو؛ نوشیدنی مورد علاقه‌ات را راحت‌تر پیدا کن.
+            </p>
 
-            <a href="#cold">سرد</a>
+            <div class="hero-actions">
 
-            <a href="#matcha">ماچا</a>
+                <a href="#menu" class="hero-btn primary">
+                    مشاهده منو
+                </a>
 
-        </aside>
+                <a href="tel:09358853137" class="hero-btn secondary">
+                    تماس با کافه
+                </a>
 
-        <!-- محتوا -->
-        <main class="content">
+            </div>
 
-            <!-- نوشیدنی گرم -->
-            <section id="hot">
+        </div>
 
-                <h1 class="section-title">
-                    نوشیدنی گرم
-                </h1>
+    </section>
 
-                <div class="cards">
+    <!-- Search -->
+    <div class="search-box modern-search" id="menu">
 
-                    {% for drink in drinks %}
+        <div class="search-wrapper">
 
-                        {% if drink.category == 'گرم' %}
+            <i class="fa-solid fa-magnifying-glass"></i>
 
-                            <div class="card">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="جستجوی نوشیدنی..."
+            >
 
-                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
-
-                                <h2>
-                                    {{ drink.name }}
-                                </h2>
-
-                                <p class="price">
-
-                                    {{ "{:,}".format(drink.price) }} تومان
-
-                                </p>
-
-                            </div>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
-
-            <!-- نوشیدنی سرد -->
-            <section id="cold">
-
-                <h1 class="section-title">
-                    نوشیدنی سرد
-                </h1>
-
-                <div class="cards">
-
-                    {% for drink in drinks %}
-
-                        {% if drink.category == 'سرد' %}
-
-                            <div class="card">
-
-                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
-
-                                <h2>
-                                    {{ drink.name }}
-                                </h2>
-
-                                <p class="price">
-
-                                    {{ "{:,}".format(drink.price) }} تومان
-
-                                </p>
-
-                            </div>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
-
-            <!-- ماچا -->
-            <section id="matcha">
-
-                <h1 class="section-title">
-                    ماچا
-                </h1>
-
-                <div class="cards">
-
-                    {% for drink in drinks %}
-
-                        {% if drink.category == 'ماچا' %}
-
-                            <div class="card">
-
-                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}">
-
-                                <h2>
-                                    {{ drink.name }}
-                                </h2>
-
-                                <p class="price">
-
-                                    {{ "{:,}".format(drink.price) }} تومان
-
-                                </p>
-
-                            </div>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
-
-        </main>
+        </div>
 
     </div>
 
-    <!-- سرچ زنده -->
+    <!-- Category buttons -->
+    <nav class="category-tabs">
+
+        <a href="#hot" class="category-tab">
+            <i class="fa-solid fa-mug-hot"></i>
+            گرم
+        </a>
+
+        <a href="#cold" class="category-tab">
+            <i class="fa-solid fa-glass-water"></i>
+            سرد
+        </a>
+
+        <a href="#matcha" class="category-tab">
+            <i class="fa-solid fa-leaf"></i>
+            ماچا
+        </a>
+
+    </nav>
+
+    <main class="menu-wrapper">
+
+        <!-- نوشیدنی گرم -->
+        <section id="hot" class="menu-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        Hot Drinks
+                    </span>
+
+                    <h1 class="section-title">
+                        نوشیدنی گرم
+                    </h1>
+                </div>
+
+                <i class="fa-solid fa-mug-hot section-icon"></i>
+
+            </div>
+
+            <div class="cards menu-cards">
+
+                {% for drink in drinks %}
+
+                    {% if drink.category == 'گرم' %}
+
+                        <article class="card menu-card" data-title="{{ drink.name }}">
+
+                            <span class="drink-badge">
+                                {{ drink.category }}
+                            </span>
+
+                            <div class="drink-image-box">
+
+                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                                     alt="{{ drink.name }}">
+
+                            </div>
+
+                            <h2>
+                                {{ drink.name }}
+                            </h2>
+
+                            <p class="price">
+                                {{ "{:,}".format(drink.price) }} تومان
+                            </p>
+
+                        </article>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <!-- نوشیدنی سرد -->
+        <section id="cold" class="menu-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        Cold Drinks
+                    </span>
+
+                    <h1 class="section-title">
+                        نوشیدنی سرد
+                    </h1>
+                </div>
+
+                <i class="fa-solid fa-glass-water section-icon"></i>
+
+            </div>
+
+            <div class="cards menu-cards">
+
+                {% for drink in drinks %}
+
+                    {% if drink.category == 'سرد' %}
+
+                        <article class="card menu-card" data-title="{{ drink.name }}">
+
+                            <span class="drink-badge cold-badge">
+                                {{ drink.category }}
+                            </span>
+
+                            <div class="drink-image-box">
+
+                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                                     alt="{{ drink.name }}">
+
+                            </div>
+
+                            <h2>
+                                {{ drink.name }}
+                            </h2>
+
+                            <p class="price">
+                                {{ "{:,}".format(drink.price) }} تومان
+                            </p>
+
+                        </article>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <!-- ماچا -->
+        <section id="matcha" class="menu-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        Matcha
+                    </span>
+
+                    <h1 class="section-title">
+                        ماچا
+                    </h1>
+                </div>
+
+                <i class="fa-solid fa-leaf section-icon"></i>
+
+            </div>
+
+            <div class="cards menu-cards">
+
+                {% for drink in drinks %}
+
+                    {% if drink.category == 'ماچا' %}
+
+                        <article class="card menu-card" data-title="{{ drink.name }}">
+
+                            <span class="drink-badge matcha-badge">
+                                {{ drink.category }}
+                            </span>
+
+                            <div class="drink-image-box">
+
+                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                                     alt="{{ drink.name }}">
+
+                            </div>
+
+                            <h2>
+                                {{ drink.name }}
+                            </h2>
+
+                            <p class="price">
+                                {{ "{:,}".format(drink.price) }} تومان
+                            </p>
+
+                        </article>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <h3>چیزی پیدا نشد</h3>
+            <p>اسم نوشیدنی را دوباره بررسی کن.</p>
+        </div>
+
+    </main>
+
+    <footer class="footer modern-footer">
+
+        <h2>
+            ارتباط با کافه پیانو
+        </h2>
+
+        <p class="footer-text">
+            برای سفارش، رزرو یا پیدا کردن مسیر، از لینک‌های زیر استفاده کن.
+        </p>
+
+        <div class="footer-buttons">
+
+            <a href="tel:09358853137" class="footer-btn">
+                <i class="fa-solid fa-phone"></i>
+                تماس با کافه
+            </a>
+
+            <a href="https://instagram.com/piano__coffee_"
+               target="_blank"
+               class="footer-btn">
+                <i class="fa-brands fa-instagram"></i>
+                اینستاگرام
+            </a>
+
+            <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
+               target="_blank"
+               class="footer-btn">
+                <i class="fa-solid fa-location-dot"></i>
+                لوکیشن کافه
+            </a>
+
+        </div>
+
+    </footer>
+
     <script>
 
         document.addEventListener("DOMContentLoaded", function () {
 
             const searchInput = document.getElementById("searchInput");
+            const cards = document.querySelectorAll(".menu-card");
+            const emptyState = document.getElementById("emptyState");
+            const sections = document.querySelectorAll(".menu-section");
 
             searchInput.addEventListener("keyup", function () {
 
-                let filter = searchInput.value.toLowerCase();
-
-                let cards = document.querySelectorAll(".card");
+                let filter = searchInput.value.trim().toLowerCase();
+                let visibleCount = 0;
 
                 cards.forEach(card => {
 
-                    let title = card.querySelector("h2")
-                                    .innerText
-                                    .toLowerCase();
+                    let title = card.dataset.title.toLowerCase();
 
                     if (title.includes(filter)) {
-
                         card.style.display = "block";
-
+                        visibleCount++;
                     } else {
-
                         card.style.display = "none";
-
                     }
 
                 });
+
+                sections.forEach(section => {
+
+                    const visibleCards = section.querySelectorAll(".menu-card[style='display: block;'], .menu-card:not([style])");
+
+                    if (filter === "") {
+                        section.style.display = "block";
+                        return;
+                    }
+
+                    let hasVisible = false;
+
+                    section.querySelectorAll(".menu-card").forEach(card => {
+                        if (card.style.display !== "none") {
+                            hasVisible = true;
+                        }
+                    });
+
+                  section.style.display = hasVisible ? "block" : "none";
+
+                });
+
+                emptyState.style.display = visibleCount === 0 ? "block" : "none";
 
             });
 
         });
 
     </script>
-
-    <!-- فوتر -->
-    <footer class="footer">
-
-        <h2>
-            ارتباط با کافه پیانو
-        </h2>
-
-        <div class="footer-buttons">
-
-            <!-- تماس -->
-            <a href="tel:09358853137" class="footer-btn">
-
-                تماس با کافه
-
-            </a>
-
-            <!-- اینستاگرام -->
-            <a href="https://instagram.com/piano__coffee_"
-               target="_blank"
-               class="footer-btn">
-
-                اینستاگرام
-
-            </a>
-
-            <!-- مپ -->
-            <a href="https://maps.app.goo.gl/AvmQeZA7jy2iLfwi8"
-               target="_blank"
-               class="footer-btn">
-
-                لوکیشن کافه
-
-            </a>
-
-        </div>
-
-    </footer>
 
 </body>
 
