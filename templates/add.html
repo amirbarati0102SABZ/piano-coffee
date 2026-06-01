@@ -10,7 +10,7 @@
     <title>افزودن نوشیدنی</title>
 
     <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/style.css') }}">
+          href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
 
@@ -22,13 +22,13 @@
 
         <form method="POST" enctype="multipart/form-data">
 
-            <input type="text" name="name" placeholder="اسم نوشیدنی">
+            <input type="text" name="name" placeholder="اسم نوشیدنی" required>
 
-            <input type="number" name="price" placeholder="قیمت">
+            <input type="number" name="price" placeholder="قیمت" required>
 
-            <input type="file" name="image">
+            <input type="file" name="image" required>
 
-            <input type="text" name="category" placeholder="دسته بندی">
+            <input type="text" name="category" placeholder="دسته بندی مثل گرم، سرد، ماچا" required>
 
             <button type="submit">ثبت نوشیدنی</button>
 

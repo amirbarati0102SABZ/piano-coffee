@@ -10,7 +10,7 @@
     <title>ویرایش نوشیدنی</title>
 
     <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/style.css') }}">
+          href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
 
@@ -20,28 +20,33 @@
 
         <h1>ویرایش نوشیدنی</h1>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
 
             <input type="text"
                    name="name"
-                   value="{{ drink[1] }}">
+                   value="{{ drink.name }}"
+                   placeholder="اسم نوشیدنی">
 
             <input type="number"
                    name="price"
-                   value="{{ drink[2] }}">
+                   value="{{ drink.price }}"
+                   placeholder="قیمت">
 
-            <input type="text"
-                   name="image"
-                   value="{{ drink[3] }}">
+            <p>عکس فعلی:</p>
+
+            <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                 style="width:120px;height:120px;object-fit:contain;margin-bottom:15px;">
+
+            <input type="file"
+                   name="image">
 
             <input type="text"
                    name="category"
-                   value="{{ drink[4] }}">
+                   value="{{ drink.category }}"
+                   placeholder="دسته بندی">
 
             <button type="submit">
-
                 ذخیره تغییرات
-
             </button>
 
         </form>
