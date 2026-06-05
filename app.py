@@ -1,17 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.utils import secure_filename
 import os
-import uuid
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 app = Flask(__name__)
 
 # Secret Key برای Session
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
 
-# مسیر آپلود عکس‌ها
-UPLOAD_FOLDER = os.path.join("static", "uploads")
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# تنظیمات Cloudinary
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 # حداکثر حجم آپلود: 5MB
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
@@ -21,9 +26,6 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 # دسته‌بندی‌های مجاز
 ALLOWED_CATEGORIES = ["گرم", "سرد", "ماچا"]
-
-# اگر پوشه uploads نبود بساز
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # دیتابیس
 database_url = os.environ.get("DATABASE_URL")
@@ -43,7 +45,7 @@ class Drink(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Integer, nullable=False)
-    image = db.Column(db.String(200), nullable=False)
+    image = db.Column(db.String(500), nullable=False)
     category = db.Column(db.String(100), nullable=False)
 
 
@@ -64,26 +66,61 @@ def allowed_file(filename):
     return ext in ALLOWED_EXTENSIONS
 
 
-def save_uploaded_image(image_file):
+def upload_image_to_cloudinary(image_file):
     """
-    ذخیره عکس با اسم امن و یکتا
-    خروجی: نام فایل ذخیره‌شده
+    آپلود عکس در Cloudinary
+    خروجی: secure_url عکس
     """
-    original_filename = secure_filename(image_file.filename)
-
-    if original_filename == "":
+    if not image_file or image_file.filename == "":
         return None
 
-    if not allowed_file(original_filename):
+    if not allowed_file(image_file.filename):
         return None
 
-    ext = original_filename.rsplit(".", 1)[1].lower()
-    unique_filename = f"{uuid.uuid4().hex}.{ext}"
+    try:
+        result = cloudinary.uploader.upload(
+            image_file,
+            folder="piano-coffee",
+            resource_type="image"
+        )
+        return result.get("secure_url")
+    except Exception as e:
+        print("Cloudinary upload error:", e)
+        return None
 
-    image_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_filename)
-    image_file.save(image_path)
 
-    return unique_filename
+def delete_image_from_cloudinary(image_url):
+    """
+    حذف عکس از Cloudinary بر اساس URL ذخیره‌شده
+    """
+    try:
+        if not image_url or "cloudinary.com" not in image_url:
+            return
+
+        # نمونه URL:
+        # https://res.cloudinary.com/<cloud_name>/image/upload/v1234567890/piano-coffee/abc.jpg
+        upload_part = "/upload/"
+        if upload_part not in image_url:
+            return
+
+        public_part = image_url.split(upload_part, 1)[1]
+
+        # حذف نسخه v123...
+        parts = public_part.split("/")
+        if len(parts) < 2:
+            return
+
+        if parts[0].startswith("v"):
+            parts = parts[1:]
+
+        public_id_with_ext = "/".join(parts)
+
+        # حذف پسوند فایل
+        public_id = os.path.splitext(public_id_with_ext)[0]
+
+        cloudinary.uploader.destroy(public_id, resource_type="image")
+    except Exception as e:
+        print("Cloudinary delete error:", e)
 
 
 # صفحه اصلی مشتری
@@ -174,15 +211,15 @@ def add():
         if price < 0:
             return "قیمت نمی‌تواند منفی باشد"
 
-        filename = save_uploaded_image(image_file)
+        image_url = upload_image_to_cloudinary(image_file)
 
-        if not filename:
-            return "فرمت عکس مجاز نیست. فقط png، jpg، jpeg و webp مجاز هستند."
+        if not image_url:
+            return "آپلود عکس ناموفق بود یا فرمت عکس مجاز نیست. فقط png، jpg، jpeg و webp مجاز هستند."
 
         new_drink = Drink(
             name=name,
             price=price,
-            image=filename,
+            image=image_url,
             category=category
         )
 
@@ -229,20 +266,15 @@ def edit(id):
 
         # اگر عکس جدید انتخاب شد
         if image_file and image_file.filename != "":
-            filename = save_uploaded_image(image_file)
+            image_url = upload_image_to_cloudinary(image_file)
 
-            if not filename:
-                return "فرمت عکس مجاز نیست. فقط png، jpg، jpeg و webp مجاز هستند."
+            if not image_url:
+                return "آپلود عکس ناموفق بود یا فرمت عکس مجاز نیست. فقط png، jpg، jpeg و webp مجاز هستند."
 
-            # حذف عکس قبلی از uploads
-            old_image_path = os.path.join(app.config["UPLOAD_FOLDER"], drink.image)
-            if os.path.exists(old_image_path):
-                try:
-                    os.remove(old_image_path)
-                except Exception:
-                    pass
+            # حذف عکس قبلی از Cloudinary
+            delete_image_from_cloudinary(drink.image)
 
-            drink.image = filename
+            drink.image = image_url
 
         db.session.commit()
 
@@ -259,13 +291,8 @@ def delete(id):
 
     drink = Drink.query.get_or_404(id)
 
-    # حذف عکس از پوشه uploads
-    image_path = os.path.join(app.config["UPLOAD_FOLDER"], drink.image)
-    if os.path.exists(image_path):
-        try:
-            os.remove(image_path)
-        except Exception:
-            pass
+    # حذف عکس از Cloudinary
+    delete_image_from_cloudinary(drink.image)
 
     db.session.delete(drink)
     db.session.commit()
