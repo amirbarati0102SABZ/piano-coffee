@@ -135,6 +135,16 @@
             ماچا
         </a>
 
+        <a href="#herbal" class="category-tab">
+            <i class="fa-solid fa-seedling"></i>
+            دمنوش
+        </a>
+
+        <a href="#shake" class="category-tab">
+            <i class="fa-solid fa-blender"></i>
+            شیک
+        </a>
+
     </nav>
 
     <main class="menu-wrapper">
@@ -172,7 +182,7 @@
 
                             <div class="drink-image-box">
 
-                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                                <img src="{{ drink.image }}"
                                      alt="{{ drink.name }}">
 
                             </div>
@@ -228,7 +238,7 @@
 
                             <div class="drink-image-box">
 
-                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                                <img src="{{ drink.image }}"
                                      alt="{{ drink.name }}">
 
                             </div>
@@ -284,7 +294,119 @@
 
                             <div class="drink-image-box">
 
-                                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                                <img src="{{ drink.image }}"
+                                     alt="{{ drink.name }}">
+
+                            </div>
+
+                            <h2>
+                                {{ drink.name }}
+                            </h2>
+
+                            <p class="price">
+                                {{ "{:,}".format(drink.price) }} تومان
+                            </p>
+
+                        </article>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <!-- دمنوش -->
+        <section id="herbal" class="menu-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        Herbal Tea
+                    </span>
+
+                    <h1 class="section-title">
+                        دمنوش
+                    </h1>
+                </div>
+
+                <i class="fa-solid fa-seedling section-icon"></i>
+
+            </div>
+
+            <div class="cards menu-cards">
+
+                {% for drink in drinks %}
+
+                    {% if drink.category == 'دمنوش' %}
+
+                        <article class="card menu-card" data-title="{{ drink.name }}">
+
+                            <span class="drink-badge herbal-badge">
+                                {{ drink.category }}
+                            </span>
+
+                            <div class="drink-image-box">
+
+                                <img src="{{ drink.image }}"
+                                     alt="{{ drink.name }}">
+
+                            </div>
+
+                            <h2>
+                                {{ drink.name }}
+                            </h2>
+
+                            <p class="price">
+                                {{ "{:,}".format(drink.price) }} تومان
+                            </p>
+
+                        </article>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <!-- شیک -->
+        <section id="shake" class="menu-section">
+
+            <div class="section-heading">
+
+                <div>
+                    <span class="section-kicker">
+                        Shakes
+                    </span>
+
+                    <h1 class="section-title">
+                        شیک
+                    </h1>
+                </div>
+
+                <i class="fa-solid fa-blender section-icon"></i>
+
+            </div>
+
+            <div class="cards menu-cards">
+
+                {% for drink in drinks %}
+
+                    {% if drink.category == 'شیک' %}
+
+                        <article class="card menu-card" data-title="{{ drink.name }}">
+
+                            <span class="drink-badge shake-badge">
+                                {{ drink.category }}
+                            </span>
+
+                            <div class="drink-image-box">
+
+                                <img src="{{ drink.image }}"
                                      alt="{{ drink.name }}">
 
                             </div>
@@ -379,8 +501,6 @@
 
                 sections.forEach(section => {
 
-                    const visibleCards = section.querySelectorAll(".menu-card[style='display: block;'], .menu-card:not([style])");
-
                     if (filter === "") {
                         section.style.display = "block";
                         return;
@@ -394,7 +514,7 @@
                         }
                     });
 
-                  section.style.display = hasVisible ? "block" : "none";
+                    section.style.display = hasVisible ? "block" : "none";
 
                 });
 

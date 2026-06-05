@@ -19,20 +19,20 @@
             <div>
                 <h1>پنل مدیریت کافه پیانو</h1>
                 <p class="admin-subtitle">
-                    مدیریت منو، نوشیدنی‌ها و قیمت‌ها
+                    مدیریت منو، نوشیدنی‌ها، قیمت‌ها و ترتیب نمایش
                 </p>
             </div>
 
             <div class="admin-actions">
-                <a href="/" class="admin-action-btn view-btn">
+                <a href="{{ url_for('home') }}" class="admin-action-btn view-btn">
                     مشاهده سایت
                 </a>
 
-                <a href="/add" class="admin-action-btn add-new-btn">
+                <a href="{{ url_for('add') }}" class="admin-action-btn add-new-btn">
                     افزودن نوشیدنی
                 </a>
 
-                <a href="/logout" class="admin-action-btn logout-admin-btn">
+                <a href="{{ url_for('logout') }}" class="admin-action-btn logout-admin-btn">
                     خروج
                 </a>
             </div>
@@ -62,6 +62,16 @@
                 <strong>{{ matcha_count }}</strong>
             </div>
 
+            <div class="dashboard-card">
+                <span class="dashboard-label">دمنوش</span>
+                <strong>{{ herbal_count }}</strong>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-label">شیک</span>
+                <strong>{{ shake_count }}</strong>
+            </div>
+
         </div>
 
         {% if latest_drink %}
@@ -77,13 +87,17 @@
             لیست نوشیدنی‌ها
         </h2>
 
+        <p class="admin-subtitle">
+            برای تغییر ترتیب نمایش، از دکمه‌های بالا، پایین، اول و آخر استفاده کن.
+        </p>
+
         <div class="admin-drinks">
 
             {% for drink in drinks %}
 
             <div class="admin-card">
 
-                <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+                <img src="{{ drink.image }}"
                      alt="{{ drink.name }}">
 
                 <h2>{{ drink.name }}</h2>
@@ -96,14 +110,50 @@
                     دسته‌بندی: {{ drink.category }}
                 </p>
 
+                <div class="sort-actions">
+
+                    <form method="POST"
+                          action="{{ url_for('move_drink', id=drink.id, direction='up') }}"
+                          style="display:inline;">
+                        <button type="submit" class="sort-btn">
+                            ↑ بالا
+                        </button>
+                    </form>
+
+                    <form method="POST"
+                          action="{{ url_for('move_drink', id=drink.id, direction='down') }}"
+                          style="display:inline;">
+                        <button type="submit" class="sort-btn">
+                            ↓ پایین
+                        </button>
+                    </form>
+
+                    <form method="POST"
+                          action="{{ url_for('move_drink', id=drink.id, direction='top') }}"
+                          style="display:inline;">
+                        <button type="submit" class="sort-btn">
+                            اول
+                        </button>
+                    </form>
+
+                    <form method="POST"
+                          action="{{ url_for('move_drink', id=drink.id, direction='bottom') }}"
+                          style="display:inline;">
+                        <button type="submit" class="sort-btn">
+                            آخر
+                        </button>
+                    </form>
+
+                </div>
+
                 <div class="admin-card-actions">
 
-                    <a class="edit-btn" href="/edit/{{ drink.id }}">
+                    <a class="edit-btn" href="{{ url_for('edit', id=drink.id) }}">
                         ویرایش
                     </a>
 
                     <form method="POST"
-                          action="/delete/{{ drink.id }}"
+                          action="{{ url_for('delete', id=drink.id) }}"
                           onsubmit="return confirm('آیا از حذف این آیتم مطمئن هستید؟')">
 
                         <button type="submit" class="delete-btn">

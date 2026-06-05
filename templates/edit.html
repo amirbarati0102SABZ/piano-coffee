@@ -49,13 +49,13 @@
                 عکس فعلی:
             </p>
 
-            <img src="{{ url_for('static', filename='uploads/' + drink.image) }}"
+            <img src="{{ drink.image }}"
                  class="edit-preview-image"
                  alt="{{ drink.name }}">
 
             <input type="file"
                    name="image"
-                   accept="image/png,image/jpeg,image/jpg,image/webp">
+                   accept="image/*">
 
             <button type="submit">
                 ذخیره تغییرات
@@ -63,7 +63,7 @@
 
         </form>
 
-        <a href="/admin" class="back-admin-link">
+        <a href="{{ url_for('admin') }}" class="back-admin-link">
             بازگشت به پنل مدیریت
         </a>
 
