@@ -5,6 +5,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 import os
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 
 
 app = Flask(__name__)
@@ -50,7 +51,6 @@ cloudinary.config(
 
 database_url = os.environ.get("DATABASE_URL")
 
-# Render گاهی postgres:// می‌دهد ولی SQLAlchemy جدید postgresql:// می‌خواهد
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
@@ -78,16 +78,10 @@ class Drink(db.Model):
 # ==========================================================
 
 def is_admin_logged_in():
-    """
-    بررسی لاگین بودن ادمین
-    """
     return session.get("admin") is True
 
 
 def allowed_file(filename):
-    """
-    بررسی مجاز بودن فرمت فایل آپلودی
-    """
     if not filename or "." not in filename:
         return False
 
@@ -96,36 +90,21 @@ def allowed_file(filename):
 
 
 def cloudinary_is_configured():
-    """
-    بررسی اینکه متغیرهای Cloudinary روی Render تنظیم شده‌اند یا نه
-    """
     return bool(CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET)
 
 
 def category_sort_index(category):
-    """
-    مشخص کردن ترتیب دسته‌بندی‌ها.
-    اگر دسته‌بندی ناشناخته باشد، آخر لیست قرار می‌گیرد.
-    """
     if category in CATEGORY_ORDER:
         return CATEGORY_ORDER.index(category)
-
     return 999
 
 
-def get_drink_or_404(drink_id):
-    """
-    دریافت یک نوشیدنی بر اساس id.
-    سازگارتر با نسخه‌های جدید SQLAlchemy.
-    """
-    return db.session.get(Drink, drink_id) or abort_not_found()
-
-
 def abort_not_found():
-    """
-    پیام ساده برای آیتم پیدا نشده.
-    """
     return "آیتم مورد نظر پیدا نشد", 404
+
+
+def get_drink_or_404(drink_id):
+    return db.session.get(Drink, drink_id) or abort_not_found()
 
 
 # ==========================================================
@@ -134,7 +113,6 @@ def abort_not_found():
 
 def upload_image_to_cloudinary(image_file):
     """
-    آپلود عکس در Cloudinary.
     خروجی:
     {
         "success": True/False,
@@ -220,15 +198,63 @@ def upload_image_to_cloudinary(image_file):
         }
 
 
+def extract_public_id_from_url(image_url):
+    """
+    تلاش برای استخراج public_id از URL عکس Cloudinary
+    """
+    try:
+        if not image_url or "/upload/" not in image_url:
+            return None
+
+        after_upload = image_url.split("/upload/")[1]
+
+        parts = after_upload.split("/")
+
+        filtered_parts = []
+        for part in parts:
+            if part.startswith("v") and part[1:].isdigit():
+                continue
+            filtered_parts.append(part)
+
+        if not filtered_parts:
+            return None
+
+        path = "/".join(filtered_parts)
+
+        if "." in path:
+            path = path.rsplit(".", 1)[0]
+
+        return path
+
+    except Exception:
+        return None
+
+
+def delete_image_from_cloudinary(image_url):
+    """
+    حذف عکس از Cloudinary در صورت امکان
+    """
+    if not cloudinary_is_configured():
+        return False
+
+    public_id = extract_public_id_from_url(image_url)
+
+    if not public_id:
+        return False
+
+    try:
+        cloudinary.uploader.destroy(public_id, invalidate=True, resource_type="image")
+        return True
+    except Exception as e:
+        print("Cloudinary delete error:", repr(e))
+        return False
+
+
 # ==========================================================
 # مدیریت ترتیب نوشیدنی‌ها
 # ==========================================================
 
 def get_ordered_drinks():
-    """
-    دریافت نوشیدنی‌ها با ترتیب نهایی:
-    اول بر اساس دسته‌بندی، بعد sort_order، بعد id
-    """
     drinks = Drink.query.all()
 
     return sorted(
@@ -242,10 +268,6 @@ def get_ordered_drinks():
 
 
 def get_next_sort_order(category):
-    """
-    برای نوشیدنی جدید، آخرین sort_order همان دسته‌بندی را می‌گیرد
-    و آیتم جدید را به انتهای همان دسته اضافه می‌کند.
-    """
     max_order = (
         db.session.query(db.func.max(Drink.sort_order))
         .filter_by(category=category)
@@ -256,10 +278,6 @@ def get_next_sort_order(category):
 
 
 def normalize_category_order(category):
-    """
-    مرتب‌سازی مجدد شماره‌های sort_order داخل یک دسته‌بندی.
-    ترتیب‌ها را به 1، 2، 3، ... تبدیل می‌کند.
-    """
     if not category:
         return
 
@@ -275,10 +293,6 @@ def normalize_category_order(category):
 
 
 def normalize_all_orders():
-    """
-    مرتب‌سازی همه دسته‌بندی‌ها.
-    مخصوصاً بعد از اضافه شدن ستون sort_order به دیتابیس قدیمی مفید است.
-    """
     for category in ALLOWED_CATEGORIES:
         normalize_category_order(category)
 
@@ -286,10 +300,6 @@ def normalize_all_orders():
 
 
 def ensure_sort_order_column():
-    """
-    اگر دیتابیس قبلاً ساخته شده باشد و ستون sort_order نداشته باشد،
-    این تابع ستون sort_order را بدون پاک کردن اطلاعات قبلی اضافه می‌کند.
-    """
     try:
         inspector = inspect(db.engine)
         columns = [column["name"] for column in inspector.get_columns("drink")]
@@ -318,7 +328,7 @@ with app.app_context():
 
 
 # ==========================================================
-# Error Handler
+# Error Handlers
 # ==========================================================
 
 @app.errorhandler(RequestEntityTooLarge)
@@ -340,19 +350,12 @@ def handle_server_error(error):
 # مسیرهای سایت
 # ==========================================================
 
-# صفحه اصلی مشتری
 @app.route("/")
 def home():
     drinks = get_ordered_drinks()
-
-    return render_template(
-        "index.html",
-        drinks=drinks,
-        categories=ALLOWED_CATEGORIES
-    )
+    return render_template("index.html", drinks=drinks, categories=ALLOWED_CATEGORIES)
 
 
-# ورود مدیریت
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -362,7 +365,6 @@ def login():
         admin_username = os.environ.get("ADMIN_USERNAME")
         admin_password = os.environ.get("ADMIN_PASSWORD")
 
-        # اگر روی سرور متغیرها تنظیم نشده باشند، ورود انجام نشود
         if not admin_username or not admin_password:
             return "متغیرهای ADMIN_USERNAME و ADMIN_PASSWORD روی سرور تنظیم نشده‌اند."
 
@@ -375,14 +377,12 @@ def login():
     return render_template("login.html")
 
 
-# خروج
 @app.route("/logout")
 def logout():
     session.pop("admin", None)
     return redirect(url_for("home"))
 
 
-# پنل مدیریت + داشبورد
 @app.route("/admin")
 def admin():
     if not is_admin_logged_in():
@@ -412,7 +412,6 @@ def admin():
     )
 
 
-# افزودن نوشیدنی
 @app.route("/add", methods=["GET", "POST"])
 def add():
     if not is_admin_logged_in():
@@ -438,8 +437,6 @@ def add():
         if price < 0:
             return "قیمت نمی‌تواند منفی باشد"
 
-        image_url = upload_image_to_cloudinary(image_file)
-
         upload_result = upload_image_to_cloudinary(image_file)
 
         if not upload_result["success"]:
@@ -462,7 +459,6 @@ def add():
 
         image_url = upload_result["url"]
 
-
         new_drink = Drink(
             name=name,
             price=price,
@@ -479,7 +475,6 @@ def add():
     return render_template("add.html", categories=ALLOWED_CATEGORIES)
 
 
-# ویرایش نوشیدنی
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit(id):
     if not is_admin_logged_in():
@@ -515,7 +510,6 @@ def edit(id):
         drink.name = name
         drink.price = price
 
-        # اگر دسته‌بندی تغییر کند، نوشیدنی به انتهای دسته‌بندی جدید منتقل می‌شود
         if category != old_category:
             drink.category = category
             drink.sort_order = get_next_sort_order(category)
@@ -524,36 +518,26 @@ def edit(id):
 
         image_file = request.files.get("image")
 
-        # اگر عکس جدید انتخاب شد
         if image_file and image_file.filename != "":
-            image_url = upload_image_to_cloudinary(image_file)
-
             upload_result = upload_image_to_cloudinary(image_file)
 
-        if not upload_result["success"]:
-            return f"""
-            <div style="font-family: sans-serif; direction: rtl; padding: 30px;">
-                <h2>آپلود عکس جدید ناموفق بود</h2>
-                <p><strong>دلیل خطا:</strong></p>
-                <pre style="background:#f3f3f3; padding:15px; border-radius:8px; direction:ltr; text-align:left;">{upload_result["error"]}</pre>
-                <hr>
-                <a href="{url_for('edit', id=drink.id)}">بازگشت به ویرایش نوشیدنی</a>
-            </div>
-            """
+            if not upload_result["success"]:
+                return f"""
+                <div style="font-family: sans-serif; direction: rtl; padding: 30px;">
+                    <h2>آپلود عکس جدید ناموفق بود</h2>
+                    <p><strong>دلیل خطا:</strong></p>
+                    <pre style="background:#f3f3f3; padding:15px; border-radius:8px; direction:ltr; text-align:left;">{upload_result["error"]}</pre>
+                    <hr>
+                    <a href="{url_for('edit', id=drink.id)}">بازگشت به ویرایش نوشیدنی</a>
+                </div>
+                """
 
-        image_url = upload_result["url"]
-        drink.image = image_url
-        delete_image_from_cloudinary(old_image)
-
-
+            image_url = upload_result["url"]
             drink.image = image_url
-
-            # حذف عکس قبلی از Cloudinary بعد از موفقیت آپلود عکس جدید
             delete_image_from_cloudinary(old_image)
 
         db.session.commit()
 
-        # بعد از تغییر دسته‌بندی، ترتیب هر دو دسته مرتب شود
         normalize_category_order(old_category)
         normalize_category_order(category)
         db.session.commit()
@@ -563,7 +547,6 @@ def edit(id):
     return render_template("edit.html", drink=drink, categories=ALLOWED_CATEGORIES)
 
 
-# جابه‌جایی ترتیب نوشیدنی‌ها در پنل مدیریت
 @app.route("/move/<int:id>/<direction>", methods=["POST"])
 def move_drink(id, direction):
     if not is_admin_logged_in():
@@ -584,7 +567,6 @@ def move_drink(id, direction):
         .all()
     )
 
-    # اگر sort_orderها نامرتب بودند، اول مرتب‌شان می‌کنیم
     for index, item in enumerate(same_category_drinks, start=1):
         item.sort_order = index
 
@@ -643,7 +625,6 @@ def move_drink(id, direction):
     return redirect(url_for("admin"))
 
 
-# حذف نوشیدنی - فقط با POST
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete(id):
     if not is_admin_logged_in():
@@ -660,14 +641,13 @@ def delete(id):
     db.session.delete(drink)
     db.session.commit()
 
-    # حذف عکس از Cloudinary بعد از حذف موفق آیتم از دیتابیس
     delete_image_from_cloudinary(image_url)
 
-    # بعد از حذف، ترتیب همان دسته‌بندی مرتب شود
     normalize_category_order(category)
     db.session.commit()
 
     return redirect(url_for("admin"))
+
 
 @app.route("/cloudinary-check")
 def cloudinary_check():
@@ -697,6 +677,7 @@ def cloudinary_check():
         <a href="{url_for('admin')}">بازگشت به پنل مدیریت</a>
     </div>
     """
+
 
 # ==========================================================
 # اجرای برنامه
