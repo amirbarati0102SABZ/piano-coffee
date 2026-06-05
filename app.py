@@ -135,94 +135,89 @@ def abort_not_found():
 def upload_image_to_cloudinary(image_file):
     """
     آپلود عکس در Cloudinary.
-    خروجی: secure_url عکس یا None
+    خروجی:
+    {
+        "success": True/False,
+        "url": "...",
+        "error": "..."
+    }
     """
-    if not cloudinary_is_configured():
-        print("Cloudinary is not configured. Please set environment variables.")
-        return None
 
-    if not image_file or image_file.filename == "":
-        return None
+    if not CLOUDINARY_CLOUD_NAME:
+        return {
+            "success": False,
+            "url": None,
+            "error": "CLOUDINARY_CLOUD_NAME در Render تنظیم نشده است."
+        }
+
+    if not CLOUDINARY_API_KEY:
+        return {
+            "success": False,
+            "url": None,
+            "error": "CLOUDINARY_API_KEY در Render تنظیم نشده است."
+        }
+
+    if not CLOUDINARY_API_SECRET:
+        return {
+            "success": False,
+            "url": None,
+            "error": "CLOUDINARY_API_SECRET در Render تنظیم نشده است."
+        }
+
+    if not image_file:
+        return {
+            "success": False,
+            "url": None,
+            "error": "فایل عکس از سمت فرم دریافت نشد."
+        }
+
+    if image_file.filename == "":
+        return {
+            "success": False,
+            "url": None,
+            "error": "نام فایل خالی است. احتمالاً عکسی انتخاب نشده است."
+        }
 
     if not allowed_file(image_file.filename):
-        return None
+        return {
+            "success": False,
+            "url": None,
+            "error": f"فرمت فایل مجاز نیست: {image_file.filename}"
+        }
 
     try:
+        image_file.stream.seek(0)
+
         result = cloudinary.uploader.upload(
             image_file,
             folder="piano-coffee",
             resource_type="image",
+            use_filename=True,
+            unique_filename=True,
             overwrite=False
         )
 
-        return result.get("secure_url")
+        secure_url = result.get("secure_url")
+
+        if not secure_url:
+            return {
+                "success": False,
+                "url": None,
+                "error": "Cloudinary آپلود را انجام داد ولی secure_url برنگرداند."
+            }
+
+        return {
+            "success": True,
+            "url": secure_url,
+            "error": None
+        }
 
     except Exception as e:
-        print("Cloudinary upload error:", e)
-        return None
-
-
-def extract_cloudinary_public_id(image_url):
-    """
-    استخراج public_id از URL تصویر Cloudinary.
-
-    نمونه URL:
-    https://res.cloudinary.com/<cloud_name>/image/upload/v1234567890/piano-coffee/abc.jpg
-
-    خروجی:
-    piano-coffee/abc
-    """
-    try:
-        if not image_url or "cloudinary.com" not in image_url:
-            return None
-
-        upload_marker = "/upload/"
-        if upload_marker not in image_url:
-            return None
-
-        public_part = image_url.split(upload_marker, 1)[1]
-
-        # حذف query string احتمالی
-        public_part = public_part.split("?", 1)[0]
-
-        parts = public_part.split("/")
-
-        # حذف نسخه v1234567890 اگر وجود داشت
-        if parts and parts[0].startswith("v") and parts[0][1:].isdigit():
-            parts = parts[1:]
-
-        if not parts:
-            return None
-
-        public_id_with_ext = "/".join(parts)
-
-        # حذف پسوند فایل
-        public_id = os.path.splitext(public_id_with_ext)[0]
-
-        return public_id
-
-    except Exception as e:
-        print("Cloudinary public_id extract error:", e)
-        return None
-
-
-def delete_image_from_cloudinary(image_url):
-    """
-    حذف عکس از Cloudinary بر اساس URL ذخیره‌شده.
-    اگر تصویر Cloudinary نباشد، کاری انجام نمی‌دهد.
-    """
-    if not cloudinary_is_configured():
-        return
-
-    public_id = extract_cloudinary_public_id(image_url)
-
-    if not public_id:
-        return
-
-    try:
-        cloudinary.uploader.destroy(public_id, resource_type="image")
-    except Exception as e:
-        print("Cloudinary delete error:", e)
+        return {
+            "success": False,
+            "url": None,
+            "error": f"خطای Cloudinary: {repr(e)}"
+        }
 
 
 # ==========================================================
@@ -445,11 +440,28 @@ def add():
 
         image_url = upload_image_to_cloudinary(image_file)
 
-        if not image_url:
-            return (
-                "آپلود عکس ناموفق بود. لطفاً تنظیمات Cloudinary، حجم فایل و فرمت عکس را بررسی کنید. "
-                "فرمت‌های مجاز: png، jpg، jpeg، webp، heic، heif"
-            )
+        upload_result = upload_image_to_cloudinary(image_file)
+
+        if not upload_result["success"]:
+            return f"""
+            <div style="font-family: sans-serif; direction: rtl; padding: 30px;">
+                <h2>آپلود عکس ناموفق بود</h2>
+                <p><strong>دلیل خطا:</strong></p>
+                <pre style="background:#f3f3f3; padding:15px; border-radius:8px; direction:ltr; text-align:left;">{upload_result["error"]}</pre>
+                <hr>
+                <p>مواردی که باید بررسی شوند:</p>
+                <ul>
+                    <li>متغیرهای Cloudinary در Render درست تنظیم شده باشند.</li>
+                    <li>بعد از تنظیم متغیرها، Manual Deploy انجام شده باشد.</li>
+                    <li>فایل عکس فرمت مجاز داشته باشد.</li>
+                    <li>حجم عکس کمتر از 16MB باشد.</li>
+                </ul>
+                <a href="{url_for('add')}">بازگشت به افزودن نوشیدنی</a>
+            </div>
+            """
+
+        image_url = upload_result["url"]
+
 
         new_drink = Drink(
             name=name,
@@ -516,11 +528,23 @@ def edit(id):
         if image_file and image_file.filename != "":
             image_url = upload_image_to_cloudinary(image_file)
 
-            if not image_url:
-                return (
-                    "آپلود عکس ناموفق بود. لطفاً تنظیمات Cloudinary، حجم فایل و فرمت عکس را بررسی کنید. "
-                    "فرمت‌های مجاز: png، jpg، jpeg، webp، heic، heif"
-                )
+            upload_result = upload_image_to_cloudinary(image_file)
+
+        if not upload_result["success"]:
+            return f"""
+            <div style="font-family: sans-serif; direction: rtl; padding: 30px;">
+                <h2>آپلود عکس جدید ناموفق بود</h2>
+                <p><strong>دلیل خطا:</strong></p>
+                <pre style="background:#f3f3f3; padding:15px; border-radius:8px; direction:ltr; text-align:left;">{upload_result["error"]}</pre>
+                <hr>
+                <a href="{url_for('edit', id=drink.id)}">بازگشت به ویرایش نوشیدنی</a>
+            </div>
+            """
+
+        image_url = upload_result["url"]
+        drink.image = image_url
+        delete_image_from_cloudinary(old_image)
+
 
             drink.image = image_url
 
@@ -645,6 +669,34 @@ def delete(id):
 
     return redirect(url_for("admin"))
 
+@app.route("/cloudinary-check")
+def cloudinary_check():
+    if not is_admin_logged_in():
+        return redirect(url_for("login"))
+
+    status = {
+        "CLOUDINARY_CLOUD_NAME": bool(CLOUDINARY_CLOUD_NAME),
+        "CLOUDINARY_API_KEY": bool(CLOUDINARY_API_KEY),
+        "CLOUDINARY_API_SECRET": bool(CLOUDINARY_API_SECRET),
+    }
+
+    return f"""
+    <div style="font-family: sans-serif; direction: rtl; padding: 30px;">
+        <h2>بررسی تنظیمات Cloudinary</h2>
+
+        <p>CLOUDINARY_CLOUD_NAME: <strong>{status["CLOUDINARY_CLOUD_NAME"]}</strong></p>
+        <p>CLOUDINARY_API_KEY: <strong>{status["CLOUDINARY_API_KEY"]}</strong></p>
+        <p>CLOUDINARY_API_SECRET: <strong>{status["CLOUDINARY_API_SECRET"]}</strong></p>
+
+        <hr>
+
+        <p>
+            اگر یکی از موارد بالا False باشد، یعنی همان متغیر در Render تنظیم نشده یا برنامه بعد از تنظیم آن Redeploy نشده است.
+        </p>
+
+        <a href="{url_for('admin')}">بازگشت به پنل مدیریت</a>
+    </div>
+    """
 
 # ==========================================================
 # اجرای برنامه
