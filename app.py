@@ -2,127 +2,47 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, inspect
 from werkzeug.exceptions import RequestEntityTooLarge
-from urllib.parse import urlparse
 import os
 import cloudinary
 import cloudinary.uploader
-
+import cloudinary.api
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+# ==========================================================
+# App config
+# ==========================================================
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "heic", "heif"}
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 ALLOWED_CATEGORIES = ["گرم", "سرد", "ماچا", "دمنوش", "شیک"]
 CATEGORY_ORDER = ["گرم", "سرد", "ماچا", "دمنوش", "شیک"]
 
-
 # ==========================================================
 # Cloudinary
+# نسخه ساده و مستقیم مثل حالتی که قبلاً برایت کار می‌کرد
 # ==========================================================
 
-def get_env_value(*names):
-    for name in names:
-        value = os.environ.get(name)
-        if value and str(value).strip():
-            return str(value).strip()
-    return ""
+CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET")
 
-
-CLOUDINARY_URL = get_env_value(
-    "CLOUDINARY_URL",
-    "cloudinary_url",
-    "Cloudinary_URL",
-    "CLOUDINARYURL",
-    "CLOUDINARY"
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True
 )
-
-CLOUDINARY_CLOUD_NAME = get_env_value(
-    "CLOUDINARY_CLOUD_NAME",
-    "CLOUD_NAME",
-    "CLOUDINARY_NAME",
-    "CLOUDINARY_CLOUD",
-    "cloud_name"
-)
-
-CLOUDINARY_API_KEY = get_env_value(
-    "CLOUDINARY_API_KEY",
-    "API_KEY",
-    "CLOUDINARY_KEY",
-    "cloudinary_api_key"
-)
-
-CLOUDINARY_API_SECRET = get_env_value(
-    "CLOUDINARY_API_SECRET",
-    "API_SECRET",
-    "CLOUDINARY_SECRET",
-    "cloudinary_api_secret"
-)
-
-EFFECTIVE_CLOUDINARY_CLOUD_NAME = ""
-EFFECTIVE_CLOUDINARY_API_KEY = ""
-EFFECTIVE_CLOUDINARY_API_SECRET = ""
-
-
-def configure_cloudinary():
-    global EFFECTIVE_CLOUDINARY_CLOUD_NAME
-    global EFFECTIVE_CLOUDINARY_API_KEY
-    global EFFECTIVE_CLOUDINARY_API_SECRET
-
-    if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-        EFFECTIVE_CLOUDINARY_CLOUD_NAME = CLOUDINARY_CLOUD_NAME
-        EFFECTIVE_CLOUDINARY_API_KEY = CLOUDINARY_API_KEY
-        EFFECTIVE_CLOUDINARY_API_SECRET = CLOUDINARY_API_SECRET
-
-        cloudinary.config(
-            cloud_name=EFFECTIVE_CLOUDINARY_CLOUD_NAME,
-            api_key=EFFECTIVE_CLOUDINARY_API_KEY,
-            api_secret=EFFECTIVE_CLOUDINARY_API_SECRET,
-            secure=True
-        )
-        print("Cloudinary configured with separate variables.")
-        return
-
-    if CLOUDINARY_URL:
-        try:
-            parsed = urlparse(CLOUDINARY_URL)
-
-            cloud_name = parsed.hostname
-            api_key = parsed.username
-            api_secret = parsed.password
-
-            if cloud_name and api_key and api_secret:
-                EFFECTIVE_CLOUDINARY_CLOUD_NAME = cloud_name
-                EFFECTIVE_CLOUDINARY_API_KEY = api_key
-                EFFECTIVE_CLOUDINARY_API_SECRET = api_secret
-
-                cloudinary.config(
-                    cloud_name=cloud_name,
-                    api_key=api_key,
-                    api_secret=api_secret,
-                    secure=True
-                )
-                print("Cloudinary configured with CLOUDINARY_URL.")
-                return
-
-        except Exception as e:
-            print("Cloudinary URL error:", repr(e))
-
-    cloudinary.config(secure=True)
-    print("Cloudinary is NOT configured.")
-
-
-configure_cloudinary()
 
 
 def cloudinary_is_configured():
     return bool(
-        EFFECTIVE_CLOUDINARY_CLOUD_NAME and
-        EFFECTIVE_CLOUDINARY_API_KEY and
-        EFFECTIVE_CLOUDINARY_API_SECRET
+        CLOUDINARY_CLOUD_NAME and
+        CLOUDINARY_API_KEY and
+        CLOUDINARY_API_SECRET
     )
-
 
 # ==========================================================
 # Database
@@ -147,7 +67,6 @@ class Drink(db.Model):
     category = db.Column(db.String(100), nullable=False)
     sort_order = db.Column(db.Integer, nullable=False, default=0)
 
-
 # ==========================================================
 # Helpers
 # ==========================================================
@@ -159,7 +78,6 @@ def is_admin_logged_in():
 def allowed_file(filename):
     if not filename or "." not in filename:
         return False
-
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS
 
@@ -171,13 +89,6 @@ def category_sort_index(category):
 
 
 def upload_image_to_cloudinary(image_file):
-    if not cloudinary_is_configured():
-        return {
-            "success": False,
-            "url": None,
-            "error": "Cloudinary تنظیم نیست. باید در Render متغیر CLOUDINARY_URL یا سه متغیر CLOUDINARY_CLOUD_NAME و CLOUDINARY_API_KEY و CLOUDINARY_API_SECRET وجود داشته باشد."
-        }
-
     if not image_file:
         return {
             "success": False,
@@ -200,15 +111,10 @@ def upload_image_to_cloudinary(image_file):
         }
 
     try:
-        image_file.stream.seek(0)
-
         result = cloudinary.uploader.upload(
             image_file,
             folder="piano-coffee",
-            resource_type="image",
-            use_filename=True,
-            unique_filename=True,
-            overwrite=False
+            resource_type="image"
         )
 
         secure_url = result.get("secure_url")
@@ -227,10 +133,11 @@ def upload_image_to_cloudinary(image_file):
         }
 
     except Exception as e:
+        print("Cloudinary upload error:", repr(e))
         return {
             "success": False,
             "url": None,
-            "error": repr(e)
+            "error": str(e)
         }
 
 
@@ -239,41 +146,34 @@ def extract_public_id_from_url(image_url):
         if not image_url or "/upload/" not in image_url:
             return None
 
-        after_upload = image_url.split("/upload/")[1]
-        parts = after_upload.split("/")
+        public_part = image_url.split("/upload/", 1)[1]
+        parts = public_part.split("/")
 
-        clean_parts = []
+        if len(parts) >= 2 and parts[0].startswith("v"):
+            parts = parts[1:]
 
-        for part in parts:
-            if part.startswith("v") and part[1:].isdigit():
-                continue
-            clean_parts.append(part)
-
-        path = "/".join(clean_parts)
-
-        if "." in path:
-            path = path.rsplit(".", 1)[0]
-
-        return path
+        public_id_with_ext = "/".join(parts)
+        public_id = os.path.splitext(public_id_with_ext)[0]
+        return public_id
 
     except Exception:
         return None
 
 
 def delete_image_from_cloudinary(image_url):
-    if not cloudinary_is_configured():
-        return False
-
-    public_id = extract_public_id_from_url(image_url)
-
-    if not public_id:
-        return False
-
     try:
+        if not image_url or "cloudinary.com" not in image_url:
+            return False
+
+        public_id = extract_public_id_from_url(image_url)
+
+        if not public_id:
+            return False
+
         cloudinary.uploader.destroy(
             public_id,
-            invalidate=True,
-            resource_type="image"
+            resource_type="image",
+            invalidate=True
         )
         return True
 
@@ -284,12 +184,11 @@ def delete_image_from_cloudinary(image_url):
 
 def get_ordered_drinks():
     drinks = Drink.query.all()
-
     return sorted(
         drinks,
         key=lambda drink: (
             category_sort_index(drink.category),
-            drink.sort_order or 0,
+            drink.sort_order if drink.sort_order is not None else 0,
             drink.id
         )
     )
@@ -301,7 +200,6 @@ def get_next_sort_order(category):
         .filter_by(category=category)
         .scalar()
     )
-
     return (max_order or 0) + 1
 
 
@@ -323,7 +221,6 @@ def normalize_category_order(category):
 def normalize_all_orders():
     for category in ALLOWED_CATEGORIES:
         normalize_category_order(category)
-
     db.session.commit()
 
 
@@ -349,14 +246,13 @@ with app.app_context():
     db.create_all()
     ensure_sort_order_column()
 
-
 # ==========================================================
 # Error handlers
 # ==========================================================
 
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(error):
-    return "حجم فایل بیش از حد مجاز است. حداکثر حجم مجاز 16 مگابایت است.", 413
+    return "حجم فایل بیش از حد مجاز است. حداکثر حجم مجاز 5 مگابایت است.", 413
 
 
 @app.errorhandler(404)
@@ -368,7 +264,6 @@ def handle_not_found(error):
 def handle_server_error(error):
     return "خطای داخلی سرور رخ داد. لاگ Render را بررسی کنید.", 500
 
-
 # ==========================================================
 # Routes
 # ==========================================================
@@ -376,7 +271,6 @@ def handle_server_error(error):
 @app.route("/")
 def home():
     drinks = get_ordered_drinks()
-
     return render_template(
         "index.html",
         drinks=drinks,
@@ -394,13 +288,13 @@ def login():
         admin_password = os.environ.get("ADMIN_PASSWORD")
 
         if not admin_username or not admin_password:
-            return "ADMIN_USERNAME و ADMIN_PASSWORD روی Render تنظیم نشده‌اند."
+            return "متغیرهای ADMIN_USERNAME و ADMIN_PASSWORD روی سرور تنظیم نشده‌اند."
 
         if username == admin_username and password == admin_password:
             session["admin"] = True
             return redirect(url_for("admin"))
 
-        return "نام کاربری یا رمز عبور اشتباه است."
+        return "نام کاربری یا رمز عبور اشتباه است"
 
     return render_template("login.html")
 
@@ -500,10 +394,7 @@ def add():
 
         return redirect(url_for("admin"))
 
-    return render_template(
-        "add.html",
-        categories=ALLOWED_CATEGORIES
-    )
+    return render_template("add.html", categories=ALLOWED_CATEGORIES)
 
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
@@ -610,7 +501,6 @@ def move_drink(id, direction):
 
     for index, item in enumerate(same_category_drinks, start=1):
         item.sort_order = index
-
     db.session.commit()
 
     same_category_drinks = (
@@ -621,7 +511,6 @@ def move_drink(id, direction):
     )
 
     current_index = None
-
     for index, item in enumerate(same_category_drinks):
         if item.id == drink.id:
             current_index = index
@@ -696,45 +585,15 @@ def cloudinary_check():
     if not is_admin_logged_in():
         return redirect(url_for("login"))
 
-    related_keys = []
-
-    for key in sorted(os.environ.keys()):
-        upper_key = key.upper()
-        if (
-            "CLOUDINARY" in upper_key
-            or "CLOUD_NAME" in upper_key
-            or "CLOUDNAME" in upper_key
-            or "API_KEY" in upper_key
-            or "API_SECRET" in upper_key
-        ):
-            related_keys.append(key)
-
-    if related_keys:
-        keys_html = "".join([f"<li>{key}</li>" for key in related_keys])
-    else:
-        keys_html = "<li>هیچ متغیر مرتبطی پیدا نشد.</li>"
-
     return f"""
     <div style="font-family:sans-serif;direction:rtl;padding:30px;line-height:2;">
         <h2>بررسی Cloudinary</h2>
 
-        <p>CLOUDINARY_URL خوانده شد؟ <strong>{bool(CLOUDINARY_URL)}</strong></p>
         <p>CLOUDINARY_CLOUD_NAME خوانده شد؟ <strong>{bool(CLOUDINARY_CLOUD_NAME)}</strong></p>
         <p>CLOUDINARY_API_KEY خوانده شد؟ <strong>{bool(CLOUDINARY_API_KEY)}</strong></p>
         <p>CLOUDINARY_API_SECRET خوانده شد؟ <strong>{bool(CLOUDINARY_API_SECRET)}</strong></p>
 
-        <hr>
-
-        <p>Cloud Name نهایی؟ <strong>{bool(EFFECTIVE_CLOUDINARY_CLOUD_NAME)}</strong></p>
-        <p>API Key نهایی؟ <strong>{bool(EFFECTIVE_CLOUDINARY_API_KEY)}</strong></p>
-        <p>API Secret نهایی؟ <strong>{bool(EFFECTIVE_CLOUDINARY_API_SECRET)}</strong></p>
-
         <h2>CONFIGURED: <strong>{cloudinary_is_configured()}</strong></h2>
-
-        <hr>
-
-        <h3>اسم متغیرهایی که برنامه واقعاً می‌بیند:</h3>
-        <ul>{keys_html}</ul>
 
         <br>
         <a href="{url_for('admin')}">بازگشت به پنل</a>
