@@ -2,16 +2,11 @@
 <html lang="fa" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>ویرایش نوشیدنی</title>
+    <title>ویرایش نوشیدنی | Piano Coffee</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-
 </head>
 
 <body>
@@ -33,7 +28,7 @@
                    min="0"
                    step="1000"
                    value="{{ drink.price }}"
-                   placeholder="قیمت"
+                   placeholder="قیمت به تومان"
                    required>
 
             <select name="category" required>
@@ -55,7 +50,7 @@
 
             <input type="file"
                    name="image"
-                   accept="image/*">
+                   accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
 
             <button type="submit">
                 ذخیره تغییرات

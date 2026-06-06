@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>افزودن نوشیدنی</title>
+    <title>افزودن نوشیدنی | Piano Coffee</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
@@ -25,7 +26,7 @@
                    name="price"
                    min="0"
                    step="1000"
-                   placeholder="قیمت"
+                   placeholder="قیمت به تومان"
                    required>
 
             <select name="category" required>
@@ -40,7 +41,7 @@
 
             <input type="file"
                    name="image"
-                   accept=".png,.jpg,.jpeg,.webp,.heic,.heif,image/png,image/jpeg,image/webp"
+                   accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                    required>
 
             <button type="submit">
