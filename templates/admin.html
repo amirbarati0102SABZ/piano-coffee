@@ -36,6 +36,10 @@
                     بررسی Cloudinary
                 </a>
 
+                <a href="{{ url_for('test_upload') }}" class="admin-action-btn view-btn">
+                    تست آپلود
+                </a>
+
                 <a href="{{ url_for('logout') }}" class="admin-action-btn logout-admin-btn">
                     خروج
                 </a>
@@ -44,7 +48,6 @@
 
         </div>
 
-        <!-- داشبورد آماری -->
         <div class="dashboard-cards">
 
             <div class="dashboard-card">
@@ -122,33 +125,25 @@
                         <form method="POST"
                               action="{{ url_for('move_drink', id=drink.id, direction='up') }}"
                               style="display:inline;">
-                            <button type="submit" class="sort-btn">
-                                ↑ بالا
-                            </button>
+                            <button type="submit" class="sort-btn">↑ بالا</button>
                         </form>
 
                         <form method="POST"
                               action="{{ url_for('move_drink', id=drink.id, direction='down') }}"
                               style="display:inline;">
-                            <button type="submit" class="sort-btn">
-                                ↓ پایین
-                            </button>
+                            <button type="submit" class="sort-btn">↓ پایین</button>
                         </form>
 
                         <form method="POST"
                               action="{{ url_for('move_drink', id=drink.id, direction='top') }}"
                               style="display:inline;">
-                            <button type="submit" class="sort-btn">
-                                اول
-                            </button>
+                            <button type="submit" class="sort-btn">اول</button>
                         </form>
 
                         <form method="POST"
                               action="{{ url_for('move_drink', id=drink.id, direction='bottom') }}"
                               style="display:inline;">
-                            <button type="submit" class="sort-btn">
-                                آخر
-                            </button>
+                            <button type="submit" class="sort-btn">آخر</button>
                         </form>
 
                     </div>

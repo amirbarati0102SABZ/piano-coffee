@@ -2,10 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text, inspect
 from werkzeug.exceptions import RequestEntityTooLarge
+from markupsafe import escape
 import os
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+
 
 app = Flask(__name__)
 
@@ -20,9 +22,9 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 ALLOWED_CATEGORIES = ["گرم", "سرد", "ماچا", "دمنوش", "شیک"]
 CATEGORY_ORDER = ["گرم", "سرد", "ماچا", "دمنوش", "شیک"]
 
+
 # ==========================================================
-# Cloudinary
-# نسخه ساده و مستقیم مثل حالتی که قبلاً برایت کار می‌کرد
+# Cloudinary config
 # ==========================================================
 
 CLOUDINARY_CLOUD_NAME = (os.environ.get("CLOUDINARY_CLOUD_NAME") or "").strip()
@@ -43,6 +45,16 @@ def cloudinary_is_configured():
         CLOUDINARY_API_KEY,
         CLOUDINARY_API_SECRET
     ])
+
+
+def masked_value(value, show_start=4, show_end=4):
+    if not value:
+        return "EMPTY"
+
+    if len(value) <= show_start + show_end:
+        return "*" * len(value)
+
+    return f"{value[:show_start]}***{value[-show_end:]}"
 
 
 # ==========================================================
@@ -68,6 +80,7 @@ class Drink(db.Model):
     category = db.Column(db.String(100), nullable=False)
     sort_order = db.Column(db.Integer, nullable=False, default=0)
 
+
 # ==========================================================
 # Helpers
 # ==========================================================
@@ -79,6 +92,7 @@ def is_admin_logged_in():
 def allowed_file(filename):
     if not filename or "." not in filename:
         return False
+
     ext = filename.rsplit(".", 1)[1].lower()
     return ext in ALLOWED_EXTENSIONS
 
@@ -86,6 +100,7 @@ def allowed_file(filename):
 def category_sort_index(category):
     if category in CATEGORY_ORDER:
         return CATEGORY_ORDER.index(category)
+
     return 999
 
 
@@ -94,6 +109,7 @@ def upload_image_to_cloudinary(image_file):
         return {
             "success": False,
             "url": None,
+            "public_id": None,
             "error": "فایل عکس دریافت نشد."
         }
 
@@ -101,6 +117,7 @@ def upload_image_to_cloudinary(image_file):
         return {
             "success": False,
             "url": None,
+            "public_id": None,
             "error": "هیچ عکسی انتخاب نشده است."
         }
 
@@ -108,37 +125,60 @@ def upload_image_to_cloudinary(image_file):
         return {
             "success": False,
             "url": None,
+            "public_id": None,
             "error": f"فرمت فایل مجاز نیست: {image_file.filename}"
         }
 
+    if not cloudinary_is_configured():
+        return {
+            "success": False,
+            "url": None,
+            "public_id": None,
+            "error": (
+                "Cloudinary تنظیم نشده است. "
+                f"CLOUDINARY_CLOUD_NAME={bool(CLOUDINARY_CLOUD_NAME)} | "
+                f"CLOUDINARY_API_KEY={bool(CLOUDINARY_API_KEY)} | "
+                f"CLOUDINARY_API_SECRET={bool(CLOUDINARY_API_SECRET)}"
+            )
+        }
+
     try:
+        image_file.stream.seek(0)
+
         result = cloudinary.uploader.upload(
             image_file,
             folder="piano-coffee",
             resource_type="image"
         )
 
+        print("Cloudinary upload result:", result)
+
         secure_url = result.get("secure_url")
+        public_id = result.get("public_id")
 
         if not secure_url:
             return {
                 "success": False,
                 "url": None,
-                "error": "Cloudinary آپلود کرد ولی secure_url برنگرداند."
+                "public_id": public_id,
+                "error": f"Cloudinary آپلود کرد ولی secure_url برنگرداند. result={result}"
             }
 
         return {
             "success": True,
             "url": secure_url,
+            "public_id": public_id,
             "error": None
         }
 
     except Exception as e:
         print("Cloudinary upload error:", repr(e))
+
         return {
             "success": False,
             "url": None,
-            "error": str(e)
+            "public_id": None,
+            "error": f"{type(e).__name__}: {str(e)}"
         }
 
 
@@ -155,6 +195,7 @@ def extract_public_id_from_url(image_url):
 
         public_id_with_ext = "/".join(parts)
         public_id = os.path.splitext(public_id_with_ext)[0]
+
         return public_id
 
     except Exception:
@@ -176,6 +217,7 @@ def delete_image_from_cloudinary(image_url):
             resource_type="image",
             invalidate=True
         )
+
         return True
 
     except Exception as e:
@@ -185,6 +227,7 @@ def delete_image_from_cloudinary(image_url):
 
 def get_ordered_drinks():
     drinks = Drink.query.all()
+
     return sorted(
         drinks,
         key=lambda drink: (
@@ -201,6 +244,7 @@ def get_next_sort_order(category):
         .filter_by(category=category)
         .scalar()
     )
+
     return (max_order or 0) + 1
 
 
@@ -222,6 +266,7 @@ def normalize_category_order(category):
 def normalize_all_orders():
     for category in ALLOWED_CATEGORIES:
         normalize_category_order(category)
+
     db.session.commit()
 
 
@@ -247,6 +292,7 @@ with app.app_context():
     db.create_all()
     ensure_sort_order_column()
 
+
 # ==========================================================
 # Error handlers
 # ==========================================================
@@ -265,6 +311,7 @@ def handle_not_found(error):
 def handle_server_error(error):
     return "خطای داخلی سرور رخ داد. لاگ Render را بررسی کنید.", 500
 
+
 # ==========================================================
 # Routes
 # ==========================================================
@@ -272,6 +319,7 @@ def handle_server_error(error):
 @app.route("/")
 def home():
     drinks = get_ordered_drinks()
+
     return render_template(
         "index.html",
         drinks=drinks,
@@ -372,11 +420,16 @@ def add():
         upload_result = upload_image_to_cloudinary(image_file)
 
         if not upload_result["success"]:
+            safe_error = escape(upload_result["error"])
+
             return f"""
-            <div style="font-family:sans-serif;direction:rtl;padding:30px;">
+            <div style="font-family:sans-serif;direction:rtl;padding:30px;line-height:2;">
                 <h2>آپلود عکس ناموفق بود</h2>
-                <pre style="background:#eee;padding:15px;direction:ltr;text-align:left;white-space:pre-wrap;">{upload_result["error"]}</pre>
+                <p>خطای واقعی Cloudinary در کادر زیر آمده است:</p>
+                <pre style="background:#eee;color:#111;padding:15px;direction:ltr;text-align:left;white-space:pre-wrap;border-radius:8px;">{safe_error}</pre>
                 <a href="{url_for('cloudinary_check')}">بررسی Cloudinary</a>
+                <br>
+                <a href="{url_for('test_upload')}">تست مستقیم آپلود</a>
                 <br><br>
                 <a href="{url_for('add')}">بازگشت</a>
             </div>
@@ -450,11 +503,16 @@ def edit(id):
             upload_result = upload_image_to_cloudinary(image_file)
 
             if not upload_result["success"]:
+                safe_error = escape(upload_result["error"])
+
                 return f"""
-                <div style="font-family:sans-serif;direction:rtl;padding:30px;">
+                <div style="font-family:sans-serif;direction:rtl;padding:30px;line-height:2;">
                     <h2>آپلود عکس جدید ناموفق بود</h2>
-                    <pre style="background:#eee;padding:15px;direction:ltr;text-align:left;white-space:pre-wrap;">{upload_result["error"]}</pre>
+                    <p>خطای واقعی Cloudinary در کادر زیر آمده است:</p>
+                    <pre style="background:#eee;color:#111;padding:15px;direction:ltr;text-align:left;white-space:pre-wrap;border-radius:8px;">{safe_error}</pre>
                     <a href="{url_for('cloudinary_check')}">بررسی Cloudinary</a>
+                    <br>
+                    <a href="{url_for('test_upload')}">تست مستقیم آپلود</a>
                     <br><br>
                     <a href="{url_for('edit', id=drink.id)}">بازگشت</a>
                 </div>
@@ -502,6 +560,7 @@ def move_drink(id, direction):
 
     for index, item in enumerate(same_category_drinks, start=1):
         item.sort_order = index
+
     db.session.commit()
 
     same_category_drinks = (
@@ -512,6 +571,7 @@ def move_drink(id, direction):
     )
 
     current_index = None
+
     for index, item in enumerate(same_category_drinks):
         if item.id == drink.id:
             current_index = index
@@ -586,18 +646,69 @@ def cloudinary_check():
     if not is_admin_logged_in():
         return redirect(url_for("login"))
 
+    cloud_name_status = bool(CLOUDINARY_CLOUD_NAME)
+    api_key_status = bool(CLOUDINARY_API_KEY)
+    api_secret_status = bool(CLOUDINARY_API_SECRET)
+
     return f"""
     <div style="font-family:sans-serif;direction:rtl;padding:30px;line-height:2;">
         <h2>بررسی Cloudinary</h2>
 
-        <p>CLOUDINARY_CLOUD_NAME خوانده شد؟ <strong>{bool(CLOUDINARY_CLOUD_NAME)}</strong></p>
-        <p>CLOUDINARY_API_KEY خوانده شد؟ <strong>{bool(CLOUDINARY_API_KEY)}</strong></p>
-        <p>CLOUDINARY_API_SECRET خوانده شد؟ <strong>{bool(CLOUDINARY_API_SECRET)}</strong></p>
+        <p>CLOUDINARY_CLOUD_NAME خوانده شد؟ <strong>{cloud_name_status}</strong></p>
+        <p>CLOUDINARY_API_KEY خوانده شد؟ <strong>{api_key_status}</strong></p>
+        <p>CLOUDINARY_API_SECRET خوانده شد؟ <strong>{api_secret_status}</strong></p>
+
+        <hr>
+
+        <p>Cloud Name: <strong>{escape(CLOUDINARY_CLOUD_NAME) if CLOUDINARY_CLOUD_NAME else "EMPTY"}</strong></p>
+        <p>API Key: <strong>{escape(masked_value(CLOUDINARY_API_KEY))}</strong></p>
+        <p>API Secret: <strong>{"SET" if CLOUDINARY_API_SECRET else "EMPTY"}</strong></p>
 
         <h2>CONFIGURED: <strong>{cloudinary_is_configured()}</strong></h2>
 
+        <p style="color:#b00020;">
+            اگر CONFIGURED برابر True است ولی خطای Invalid Signature داری، تقریباً قطعی API_SECRET یا ترکیب Cloud Name / API Key / API Secret اشتباه است.
+        </p>
+
+        <br>
+        <a href="{url_for('test_upload')}">تست مستقیم آپلود</a>
         <br>
         <a href="{url_for('admin')}">بازگشت به پنل</a>
+    </div>
+    """
+
+
+@app.route("/test-upload", methods=["GET", "POST"])
+def test_upload():
+    if not is_admin_logged_in():
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        image_file = request.files.get("image")
+        upload_result = upload_image_to_cloudinary(image_file)
+
+        safe_result = escape(str(upload_result))
+
+        return f"""
+        <div style="font-family:sans-serif;direction:rtl;padding:30px;line-height:2;">
+            <h2>نتیجه تست مستقیم آپلود</h2>
+            <pre style="background:#eee;color:#111;padding:15px;direction:ltr;text-align:left;white-space:pre-wrap;border-radius:8px;">{safe_result}</pre>
+            <a href="{url_for('test_upload')}">تست دوباره</a>
+            <br>
+            <a href="{url_for('admin')}">بازگشت به پنل</a>
+        </div>
+        """
+
+    return """
+    <div style="font-family:sans-serif;direction:rtl;padding:30px;line-height:2;">
+        <h2>تست مستقیم آپلود Cloudinary</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required>
+            <br><br>
+            <button type="submit">آپلود تستی</button>
+        </form>
+        <br>
+        <a href="/admin">بازگشت به پنل</a>
     </div>
     """
 
